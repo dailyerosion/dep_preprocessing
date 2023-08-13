@@ -72,7 +72,7 @@ class Tool(object):
         return
     
 
-def doTillageAssign():
+def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -88,6 +88,21 @@ def doTillageAssign():
     ## 2023.06.15 v3d - added output of median residue cover for ACPF OFE tool
     ## 2023.06.15 v3e - reverted to re-include reduction of residue cover when calculating management code
     ##                  re-named tillage and residue tables due to confusion on what was stored where
+    #
+    # INPUTS
+    # fb - ACPF field boundaries
+    # lu6 - ACPF land use table
+    # rc_table - median residue cover of field from RS (GEE or Minnesota)
+    # manfield - name of management field
+    # bulkDir - bulk processing directory
+    #
+    # OUTPUTS
+    # tillage_table - output of tillage code
+
+    # OTHER NECESSARY
+    # tillfield - name of tillage code field
+    # adj_rc_field_name - name of residue cover
+    # cleanup - T or F, whether to log data
 
     import sys
     import os
@@ -96,49 +111,8 @@ def doTillageAssign():
     import platform
     from os.path import join as opj
     import numpy as np
-    ##if sys.version_info.major == 2:
-    ##    import time
-    ##    print(time.clock())
-    ##elif sys.version_info.major == 3:
-    ##    import time
-    ##    print(time.perf_counter())
-
 
     #management calculator
-
-    if len(sys.argv) == 1:
-        cleanup = False
-        parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-        "C:/DEP/Scripts/basics/man_data_processor_v3e.py",
-    ##	"070801050101",
-        "070600050201",
-        "2022",
-        "26915",
-        "mean18",
-        "3"]
-    ##    ["C:/Python27/ArcGISx6410.3/pythonw.exe",
-    ##	"O:/DEP/Scripts/basics/man_data_processor_v3b.py",
-    ##	"090201081102",
-    ##	"2021",
-    ##	"26915",
-    ##	"mean18",
-    ##	"3"]
-
-        for i in parameters[2:]:
-            sys.argv.append(i)
-
-    else:
-        cleanup = True
-    
-    huc12 = sys.argv[1]
-    ACPFyear = sys.argv[2]
-    srOutCode = sys.argv[3]
-    interpType = sys.argv[4]
-    cellSize = int(sys.argv[5])
-    if len(sys.argv) > 6:
-        version = sys.argv[6]
-    else:
-        version = ''
 
     if cleanup:
         # log to file only
@@ -147,39 +121,12 @@ def doTillageAssign():
         # log to file and console
         log, nowYmd, logName, startTime = df.setupLoggingNew(platform.node(), sys.argv[0], huc12)
 
-    paths = df.loadVariablesDict(platform.node(), ACPFyear, huc12, srOutCode, interpType, cellSize, nowYmd, version)
-
     # ACPF directory where channel and catchment features reside
-    ####fileGDB = sys.argv[1]
-    huc8 = huc12[:8]
 
-    basicDict,a,b,c = df.loadBasicVariablesDict(platform.node(), ACPFyear)
-    fc = basicDict['mwHuc12s5070']
-
-    shortlist, stopFile, hucSearch, where = df.loadHucs(sys.argv[0], fc, [huc12])#HUCList)
-
-    states = shortlist[0][2]
-
-    #inputs
-    ####elev = paths['fElevFile']#sys.argv[4]
-    fb = paths['fieldBoundaries']
-    lu6 = paths['LU6']#'LU6_' + huc12
-    tillage_table = paths['tillageTable']#sys.argv[]
-    if 'MN' in states:
-        rc_table = paths['mnResidueTable']
-    else:
-        rc_table = paths['geeResidueTable']
-
-    ####el = Raster(elev)
-
-    # output of tillage files
-
-    manfield = paths['manField']#sys.argv[2]
-    tillfield = paths['tillField']#sys.argv[2]
     adj_rc_field_name = paths['resCoverField']
     rc_field_name = adj_rc_field_name.replace('Adj_', '')
+
     ## bulk processing (Scratch) directory
-    bulkDir = paths["manProcDir"]#sys.argv[5]
     if arcpy.Exists(bulkDir):
         arcpy.Delete_management(bulkDir)
     os.makedirs(bulkDir)
@@ -268,10 +215,6 @@ def doTillageAssign():
 
     keys = cropDict.keys()
 
-
-    ####arcpy.env.snapRaster = elev
-    ####arcpy.env.extent = elev
-    ####arcpy.env.cellSize = elev
     arcpy.env.scratchWorkspace = bulkDir
     sgdb = arcpy.env.scratchGDB
     arcpy.env.scratchWorkspace = sgdb
@@ -412,6 +355,8 @@ def doTillageAssign():
             arcpy.DeleteField_management(till_temp, c)
 
     till_table_result = arcpy.CopyRows_management(till_temp, tillage_table)
+
+    return till_table_result
 
 
 
