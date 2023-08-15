@@ -93,13 +93,13 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
     # fb - ACPF field boundaries
     # lu6 - ACPF land use table
     # rc_table - median residue cover of field from RS (GEE or Minnesota)
-    # manfield - name of management field
-    # bulkDir - bulk processing directory
     #
     # OUTPUTS
     # tillage_table - output of tillage code
 
     # OTHER NECESSARY
+    # manfield - name of management field
+    # bulkDir - bulk processing directory
     # tillfield - name of tillage code field
     # adj_rc_field_name - name of residue cover
     # cleanup - T or F, whether to log data
