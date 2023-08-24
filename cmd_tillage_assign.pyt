@@ -71,6 +71,77 @@ class Tool(object):
         added to the display."""
         return
     
+def getManagement(rescover, crop, coverlist):
+    '''This function takes a residue cover value and crop type and determines the tillage code'''
+    ## assign tillage codes by average crop residue cover/crop type
+    ## 1- no-till planter tillage
+    ## 2- very high mulch tillage
+    ## 3- high mulch tillage
+    ## 4- medium mulch tillage
+    ## 5- low mulch tillage
+    ## 6- fall moldboard plow (plow
+
+    if rescover < 0:
+        rescover = 0
+
+    if coverlist is not None:
+        if rescover > coverlist[0]:
+            management = '1'
+        elif rescover > coverlist[1]:
+            management = '2'
+        elif rescover > coverlist[2]:
+            management = '3'
+        elif rescover > coverlist[3]:
+            management = '4'
+        elif rescover > coverlist[4]:
+            management = '5'
+        else:
+            management = '6'
+    else:
+        management = '0'
+
+    return management
+
+def calc_rescover(urow):
+    """determine the DEP residue cover given the median residue cover. 
+    Minnesota residue cover doubling should already be removed so it 
+    equals GEE residue cover"""
+
+    if urow[3] >= 0:#-100 indicates no data
+        # adjust residue cover from GEE down 10% due to anchored r2 still having a high intercept
+        # needs to be removed after improved GEE regressions
+        # adjustment altered to linearly ramp correction from 10% at 0% RC to 0% at 100% RC - 2023.07.26, bkgelder
+        res_fraction = urow[3]/100.0                    #0.20
+#         soil_fraction = 1.0 - res_fraction              #0.80
+#         adjustment = 0.1 * soil_fraction                #0.08
+# ##        adjusted_soil_fraction = 0.9 * soil_fraction    
+#         adj_rescover = res_fraction - adjustment        #0.12
+        adj_rescover = res_fraction - 0.1
+
+        rescover = max(0.0, adj_rescover)
+##        print(f"initial residue {res_fraction}, soil {soil_fraction}, adjustment {adjustment}, adj_res {adj_rescover}, final_res {rescover}")
+
+    else:
+        rescover = None
+
+    return rescover
+
+def getCropDict(bcover, ccover, gcover, wcover):
+    """Create the crop dictionary, add new residue cover levels as needed"""
+    cropDict = {'B': bcover}
+    cropDict.update({'C': ccover})
+    cropDict.update({'G': gcover})
+    cropDict.update({'W': wcover})
+    #sugarbeets, all following, assume wheat for now
+    cropDict.update({'E': wcover})
+    #rice
+    cropDict.update({'J': wcover})
+    #oilseeds (canola, safflower, flax, rape
+    cropDict.update({'O': wcover})
+    #double crops, assume residue cover calced for winter wheat
+    cropDict.update({'L': wcover})
+
+    return cropDict
 
 def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup):
     ## man_data_processor
@@ -114,6 +185,8 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
 
     #management calculator
 
+    huc12 = fb[-12:]
+
     if cleanup:
         # log to file only
         log, nowYmd, logName, startTime = df.setupLoggingNoCh(platform.node(), sys.argv[0], huc12)
@@ -123,7 +196,6 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
 
     # ACPF directory where channel and catchment features reside
 
-    adj_rc_field_name = paths['resCoverField']
     rc_field_name = adj_rc_field_name.replace('Adj_', '')
 
     ## bulk processing (Scratch) directory
@@ -132,86 +204,15 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
     os.makedirs(bulkDir)
 
 
-    ## assign tillage codes by average crop residue cover/crop type
-    ## 1- no-till planter tillage
-    ## 2- very high mulch tillage
-    ## 3- high mulch tillage
-    ## 4- medium mulch tillage
-    ## 5- low mulch tillage
-    ## 6- fall moldboard plow (plow
-
-    def getManagement(rescover, crop, coverlist):
-
-        if rescover < 0:
-            rescover = 0
-
-        if coverlist is not None:
-            if rescover > coverlist[0]:
-                management = '1'
-            elif rescover > coverlist[1]:
-                management = '2'
-            elif rescover > coverlist[2]:
-                management = '3'
-            elif rescover > coverlist[3]:
-                management = '4'
-            elif rescover > coverlist[4]:
-                management = '5'
-            else:
-                management = '6'
-        else:
-            management = '0'
-
-        return management
-
-    def calc_rescover(urow):
-        """determine the DEP residue cover given the median residue cover. 
-        Minnesota residue cover doubling should already be removed so it 
-        equals GEE residue cover"""
-
-        if urow[3] >= 0:#-100 indicates no data
-            # adjust residue cover from GEE down 10% due to anchored r2 still having a high intercept
-            # needs to be removed after improved GEE regressions
-            # adjustment altered to linearly ramp correction from 10% at 0% RC to 0% at 100% RC - 2023.07.26, bkgelder
-            res_fraction = urow[3]/100.0                    #0.20
-    #         soil_fraction = 1.0 - res_fraction              #0.80
-    #         adjustment = 0.1 * soil_fraction                #0.08
-    # ##        adjusted_soil_fraction = 0.9 * soil_fraction    
-    #         adj_rescover = res_fraction - adjustment        #0.12
-            adj_rescover = res_fraction - 0.1
-
-            rescover = max(0.0, adj_rescover)
-    ##        print(f"initial residue {res_fraction}, soil {soil_fraction}, adjustment {adjustment}, adj_res {adj_rescover}, final_res {rescover}")
-
-        else:
-            rescover = None
-
-        return rescover
-
-
-    ## fill all crop management fields that are not populated with 3 (error occurs on fields that are in two or more HUC12 databases)
-    ##        print('join management data')
+    ## fill all crop management fields by setting breaks between tillage classes)
     ## these values from David Mulla's calculations
     bcover = [0.25, 0.15, 0.10, 0.05, 0.02]#soybeans
     ccover = [0.70, 0.45, 0.30, 0.15, 0.05]#corn
     ## these values from DEP 2018 paper
     gcover = [0.65, 0.40, 0.12, 0.06, 0.03]#sorghum
     wcover = [0.50, 0.40, 0.20, 0.15, 0.06]#wheat
-    ##ecover = wcover#sugarbeets
-    ##jcover = wcover#rice
 
-    ##cropList = ['B', bcover
-    cropDict = {'B': bcover}
-    cropDict.update({'C': ccover})
-    cropDict.update({'G': gcover})
-    cropDict.update({'W': wcover})
-    #sugarbeets
-    cropDict.update({'E': wcover})
-    #rice
-    cropDict.update({'J': wcover})
-    #oilseeds (canola, safflower, flax, rape
-    cropDict.update({'O': wcover})
-    #double crops, assume residue cover calced for winter wheat
-    cropDict.update({'L': wcover})
+    cropDict = getCropDict(bcover, ccover, gcover, wcover)
 
     keys = cropDict.keys()
 
@@ -219,8 +220,6 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
     sgdb = arcpy.env.scratchGDB
     arcpy.env.scratchWorkspace = sgdb
     arcpy.env.overwriteOutput = True
-
-    ## use ACPF directory as workspace since 2 of the 5 rasters or feature classes we need are here already
     arcpy.env.workspace = os.path.dirname(fb)#fileGDB
 
     repro = arcpy.CopyRows_management(fb, os.path.join(sgdb, 'fbnds_tbl'))
@@ -378,8 +377,7 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    # ept_fc = "C:/DEP/Elev_Base_Data/ept/ept.gdb/ept_resources_2023_05_20"
-    ept_fc = sys.argv[1]
-    doTillageAssign(ept_fc, cleanup, msgStub())
+    fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir = [i for i in sys.argv[1:]]
+    doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup, msgStub())
 
     arcpy.AddMessage("Back from doTillageAssign!")
