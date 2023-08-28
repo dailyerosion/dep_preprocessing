@@ -36,13 +36,60 @@ class Tool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
 
-        output_ept_wesm_file = arcpy.Parameter(
-            name="ept_wesm_features",
-            displayName="Output EPT WESM Feature",
+        param0 = arcpy.Parameter(
+            name="ACPF_field_boundaries",
+            displayName="ACPF Field Boundaries Polygons",
             datatype="DEFeatureClass",
             parameterType='Required',
+            direction="Input")
+        
+        param1 = arcpy.Parameter(
+            name="lu6_table",
+            displayName="ACPF Land Use Table",
+            datatype="DEFeatureClass",
+            parameterType='Required',
+            direction="Input")
+        
+        param2 = arcpy.Parameter(
+            name="management_field",
+            displayName="Multi-year Management Field",
+            datatype="GPString",
+            parameterType='Required',
+            direction="Input")
+        
+        param3 = arcpy.Parameter(
+            name="tillage_field",
+            displayName="Yearly Tillage Field",
+            datatype="GPString",
+            parameterType='Required',
+            direction="Input")
+        
+        param4 = arcpy.Parameter(
+            name="tillage_field",
+            displayName="Yearly Tillage Field",
+            datatype="GPString",
+            parameterType='Required',
+            direction="Input")
+        
+        param5 = arcpy.Parameter(
+            displayName="Local Processing Directory",
+            datatype="DEFolder",
+            parameterType='Optional',
+            direction="Input")
+                
+        param6 = arcpy.Parameter(
+            name="tillage_table",
+            displayName="Tillage Table",
+            datatype="DETable",
+            parameterType='Required',
             direction="Output")
-        params = [output_ept_wesm_file]#None
+               
+        params = [param0, param1, param2, param3,
+                  param4, param5, param6]
+        # params = [huc12_buf_fc, snap, ept_wesm_file, flib_metadata_template, derivative_metadata,
+        #  procDir, eleBaseDir, softwareDir, pdal_exe, gsds,
+        #  fElevFile, bareEarthReturnMinFile, firstReturnMaxFile, cntFile,cnt1rFile,
+        #  int1rMinFile, int1rMaxFile, intBeMaxFile, breakpolys, breaklines, wesm_project_file]
         return params
 
     def isLicensed(self):
@@ -379,5 +426,4 @@ if __name__ == "__main__":
 
     fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir = [i for i in sys.argv[1:]]
     doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup, msgStub())
-
     arcpy.AddMessage("Back from doTillageAssign!")
