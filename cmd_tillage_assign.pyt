@@ -7,6 +7,26 @@ datasets to request.'''
 import arcpy
 # coding: utf-8
 
+import sys
+import os
+import platform
+from os.path import join as opj
+import numpy as np
+
+login = os.getlogin()
+    
+if login == 'bkgelder':
+    boxes = ['C:\\Users\\bkgelder\\Box\\Data_Sharing\\Scripts\\basics', 'O:\\DEP\\Scripts\\basics']
+else:
+    boxes = ['C:\\Users\\idep2\\Box\\Scripts\\basics', 'O:\\DEP\\Scripts\\basics']
+
+for box in boxes:
+    if os.path.isdir(box):
+        sys.path.append(box)
+
+import dem_functions2 as df
+
+
 class msgStub:
     def addMessage(self,text):
         arcpy.AddMessage(text)
@@ -190,7 +210,7 @@ def getCropDict(bcover, ccover, gcover, wcover):
 
     return cropDict
 
-def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup):
+def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, cleanup, messages):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -219,16 +239,8 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
     # manfield - name of management field
     # bulkDir - bulk processing directory
     # tillfield - name of tillage code field
-    # adj_rc_field_name - name of residue cover
+    # rc_field_name - name of residue cover
     # cleanup - T or F, whether to log data
-
-    import sys
-    import os
-    import arcpy
-    import dem_functions2 as df
-    import platform
-    from os.path import join as opj
-    import numpy as np
 
     #management calculator
 
@@ -243,12 +255,16 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
 
     # ACPF directory where channel and catchment features reside
 
-    rc_field_name = adj_rc_field_name.replace('Adj_', '')
+    messages.addMessage("Tool: Executing with parameters '")
 
-    ## bulk processing (Scratch) directory
-    if arcpy.Exists(bulkDir):
-        arcpy.Delete_management(bulkDir)
-    os.makedirs(bulkDir)
+    # adj_rc_field_name = 'Adj_' + rc_field_name
+    adj_rc_field_name = rc_field_name
+    rc_field_name = adj_rc_field_name.replace('Adj_', 'Pct_')
+
+    # ## bulk processing (Scratch) directory
+    # if arcpy.Exists(bulkDir):
+    #     arcpy.Delete_management(bulkDir)
+    # os.makedirs(bulkDir)
 
 
     ## fill all crop management fields by setting breaks between tillage classes)
@@ -269,28 +285,31 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = os.path.dirname(fb)#fileGDB
 
-    repro = arcpy.CopyRows_management(fb, os.path.join(sgdb, 'fbnds_tbl'))
+    # repro = arcpy.CopyRows_management(fb, os.path.join(sgdb, 'fbnds_tbl'))
 
-    fbndsTable = arcpy.TableSelect_analysis(repro, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
-    ##fbndsTable = arcpy.TableSelect_analysis(fb, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
+    # fbndsTable = arcpy.TableSelect_analysis(repro, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
+    fbndsTable = arcpy.TableSelect_analysis(fb, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
     df.joinDict(fbndsTable, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU'])
-
-    arcpy.AddField_management(fbndsTable, manfield, 'TEXT', field_length = 12)
-    arcpy.AddField_management(fbndsTable, tillfield, 'TEXT', field_length = 12)
-    arcpy.AddField_management(fbndsTable, adj_rc_field_name, 'FLOAT')
-
-    # First calculate default management using larger fields with valid residue cover
-    man_array = np.array([])    
 
     ##zstResCover = tillage_table#paths['mnTillageTable']
     log.debug('determining default management using: ' + tillage_table)
 
     df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field_name])
 
+    ref_year = 2010
+    curr_year = tillage_table[-4:]#2023
+    field_len = curr_year - ref_year + 1
+
+    arcpy.AddField_management(fbndsTable, manfield, 'TEXT', field_length = field_len)
+    arcpy.AddField_management(fbndsTable, tillfield, 'TEXT', field_length = field_len)
+    arcpy.AddField_management(fbndsTable, adj_rc_field_name, 'FLOAT')
+
     rc_fields = ['GenLU', manfield, 'CropRotatn', rc_field_name, 'FBndID', tillfield, adj_rc_field_name]
 
         ## Values are 0-100 (1% increments)
 
+    # First calculate default management using larger fields with valid residue cover
+    man_array = np.array([])    
 
     # create a numpy array to store data for default calcuations, then do actual assignments later
     # identify default management by assigning all managements possible then use most common as default
@@ -385,15 +404,8 @@ def doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_r
             # print(urow)
             ucur.updateRow(urow)
 
-    ######### create a copy for conversion to JSON for HUC12 tillage statistics
-    ########copyFbnds = arcpy.CopyRows_management(fbndsTable, paths['tillages'])#os.path.join(fileGDB, os.path.basename(tillages)))
-    ####
-    df.joinDict(repro, 'FBndID', fbndsTable, 'FBndID', [manfield, tillfield, adj_rc_field_name, rc_field_name])
 
-
-    till_temp = arcpy.CopyRows_management(repro, opj(sgdb, os.path.basename(tillage_table)))
-    ####till_temp = arcpy.CopyRows_management(fbndsTable, opj(sgdb, os.path.basename(tillage_table)))
-    ####till_temp2 = arcpy.TableSelect_analysis(fbndsTable, opj(sgdb, os.path.basename(tillage_table) + '_2'))
+    till_temp = arcpy.CopyRows_management(fbndsTable, opj(sgdb, os.path.basename(tillage_table)))
 
     till_temp_desc = arcpy.da.Describe(till_temp)
     for c in df.getfields(till_temp):
@@ -414,8 +426,15 @@ if __name__ == "__main__":
         cleanup = False
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-    "C:/DEP/Scripts/basics/cmd_ept_wesm_processing.py",
-    "C:/DEP/Elev_Base_Data/ept/ept.gdb/ept_resources_2023_05_22"]
+	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2022",
+	"Management_CY_2022",
+	"Till_code_CY_2022",
+	"Adj_RC_CY_2022",
+	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_10pctDropTill2022"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -424,6 +443,7 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir = [i for i in sys.argv[1:]]
-    doTillageAssign(fb, lu6, tillage_table, rc_table, manfield, tillfield, adj_rc_field_name, bulkDir, cleanup, msgStub())
+    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table = [i for i in sys.argv[1:]]
+    messages = msgStub()
+    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
