@@ -175,10 +175,10 @@ def calc_rescover(urow, option = 'straight'):
     equals GEE residue cover"""
 
     if urow[3] >= 0:#-100 indicates no data
+        res_fraction = urow[3]/100.0                    #0.20
         if option == 'uniform':
             # adjust residue cover from GEE down 10% due to anchored r2 still having a high intercept
             # needs to be removed after improved GEE regressions
-            res_fraction = urow[3]/100.0                    #0.20
             adj_rescover = res_fraction - 0.1               #0.10
 
         elif option == 'linear':
@@ -188,7 +188,7 @@ def calc_rescover(urow, option = 'straight'):
             adj_rescover = res_fraction - adjustment        #0.12
 
         elif option == 'none':
-             adj_rescover = res_fraction
+             adj_rescover = res_fraction                    #0.20
 
         rescover = max(0.0, adj_rescover)
 ##        print(f"initial residue {res_fraction}, soil {soil_fraction}, adjustment {adjustment}, adj_res {adj_rescover}, final_res {rescover}")
@@ -266,11 +266,11 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     adj_rc_field_name = rc_field_name
     rc_field_name = adj_rc_field_name.replace('Adj_', 'Pct_')
 
-    # ## bulk processing (Scratch) directory
+    ## bulk processing (Scratch) directory
     # if arcpy.Exists(bulkDir):
     #     arcpy.Delete_management(bulkDir)
-    # os.makedirs(bulkDir)
-
+    if not os.path.isdir(bulkDir):
+        os.makedirs(bulkDir)
 
     ## fill all crop management fields by setting breaks between tillage classes)
     ## these values from David Mulla's calculations
@@ -301,8 +301,8 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
 
     df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field_name])
 
-    ref_year = 2010
-    curr_year = tillage_table[-4:]#2023
+    ref_year = 2010 #date DEP CDL land cover stuff starts
+    curr_year = int(tillage_table[-4:])#2023
     field_len = curr_year - ref_year + 1
 
     arcpy.AddField_management(fbndsTable, manfield, 'TEXT', field_length = field_len)
@@ -439,7 +439,8 @@ if __name__ == "__main__":
 	"Till_code_CY_2022",
 	"Adj_RC_CY_2022",
 	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_10pctDropTill2022"]
+	"none",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2022"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
