@@ -169,21 +169,26 @@ def getManagement(rescover, crop, coverlist):
 
     return management
 
-def calc_rescover(urow):
+def calc_rescover(urow, option = 'straight'):
     """determine the DEP residue cover given the median residue cover. 
     Minnesota residue cover doubling should already be removed so it 
     equals GEE residue cover"""
 
     if urow[3] >= 0:#-100 indicates no data
-        # adjust residue cover from GEE down 10% due to anchored r2 still having a high intercept
-        # needs to be removed after improved GEE regressions
-        # adjustment altered to linearly ramp correction from 10% at 0% RC to 0% at 100% RC - 2023.07.26, bkgelder
-        res_fraction = urow[3]/100.0                    #0.20
-#         soil_fraction = 1.0 - res_fraction              #0.80
-#         adjustment = 0.1 * soil_fraction                #0.08
-# ##        adjusted_soil_fraction = 0.9 * soil_fraction    
-#         adj_rescover = res_fraction - adjustment        #0.12
-        adj_rescover = res_fraction - 0.1
+        if option == 'uniform':
+            # adjust residue cover from GEE down 10% due to anchored r2 still having a high intercept
+            # needs to be removed after improved GEE regressions
+            res_fraction = urow[3]/100.0                    #0.20
+            adj_rescover = res_fraction - 0.1               #0.10
+
+        elif option == 'linear':
+            # adjustment altered to linearly ramp correction from 10% at 0% RC to 0% at 100% RC - 2023.07.26, bkgelder
+            soil_fraction = 1.0 - res_fraction              #0.80
+            adjustment = 0.1 * soil_fraction                #0.08
+            adj_rescover = res_fraction - adjustment        #0.12
+
+        elif option == 'none':
+             adj_rescover = res_fraction
 
         rescover = max(0.0, adj_rescover)
 ##        print(f"initial residue {res_fraction}, soil {soil_fraction}, adjustment {adjustment}, adj_res {adj_rescover}, final_res {rescover}")
@@ -210,7 +215,7 @@ def getCropDict(bcover, ccover, gcover, wcover):
 
     return cropDict
 
-def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, cleanup, messages):
+def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, option, cleanup, messages):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -324,7 +329,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
                 mancrop = croprotate[-2]
     ##            field_rotate_length = len(croprotate)
                 if srow[3] is not None:
-                    adj_rescover = calc_rescover(srow)
+                    adj_rescover = calc_rescover(srow, option)
                 else:
                     adj_rescover = None
                     
@@ -367,7 +372,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
                 mancrop = croprotate[-2]
 
                 if urow[3] is not None and urow[0] not in ['Forest', 'Pasture|Grass|Hay', "Water/wetland"]:
-                    adj_rescover = calc_rescover(urow)
+                    adj_rescover = calc_rescover(urow, option)
                 else:
                     adj_rescover = None
 
@@ -443,7 +448,7 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table = [i for i in sys.argv[1:]]
+    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, option = [i for i in sys.argv[1:]]
     messages = msgStub()
     doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
