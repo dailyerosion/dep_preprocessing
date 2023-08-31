@@ -215,7 +215,7 @@ def getCropDict(bcover, ccover, gcover, wcover):
 
     return cropDict
 
-def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, option, cleanup, messages):
+def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -448,7 +448,7 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, option = [i for i in sys.argv[1:]]
+    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table = [i for i in sys.argv[1:]]
     messages = msgStub()
-    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, tillage_table, cleanup, messages)
+    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
