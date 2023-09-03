@@ -10,6 +10,7 @@ import arcpy
 import sys
 import os
 import platform
+import pathlib
 from os.path import join as opj
 import numpy as np
 
@@ -302,8 +303,11 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field_name])
 
     ref_year = 2010 #date DEP CDL land cover stuff starts
-    curr_year = int(tillage_table[-4:])#2023
-    field_len = curr_year - ref_year + 1
+    rc_year = int(tillage_table[-4:])#2023
+    lu6_path = pathlib.Path(lu6)
+    acpf_year = lu6_path.parent.parent.parent.name[-4:]
+    field_len = rc_year - ref_year + 1
+    log.debug(f'field_len is {field_len}')
 
     arcpy.AddField_management(fbndsTable, manfield, 'TEXT', field_length = field_len)
     arcpy.AddField_management(fbndsTable, tillfield, 'TEXT', field_length = field_len)
@@ -324,7 +328,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     ##with arcpy.da.SearchCursor(fbndsTable, rc_fields, where_clause = where) as scur:
     with arcpy.da.SearchCursor(fbndsTable, rc_fields, where_clause = 'GenLU <> \'LT 10 ac\' AND GenLU <> \'Forest\' AND GenLU <> \'Pasture|Grass|Hay\' AND GenLU <> \'Water/wetland\'') as scur:
         for srow in scur:
-            croprotate = srow[2]
+            croprotate = srow[2][:field_len]
             if croprotate is not None:
                 mancrop = croprotate[-2]
     ##            field_rotate_length = len(croprotate)
@@ -361,11 +365,12 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     ##            print(urow)
             managements = ''
             got_man = False
-            croprotate = urow[2]
+            # croprotate = urow[2]
+            croprotate = urow[2][:field_len]
             # no data on crop rotation, managements = 0
             if croprotate is None:
                 # use rotate_length to determine?
-                managements = '0' * 11
+                managements = '0' * field_len#11
 
             # else try and determine tillage practice by last crop residue cover
             else:
@@ -434,13 +439,13 @@ if __name__ == "__main__":
 	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2022",
-	"Management_CY_2022",
-	"Till_code_CY_2022",
-	"Adj_RC_CY_2022",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2017",
+	"Management_CY_2017",
+	"Till_code_CY_2017",
+	"Adj_RC_CY_2017",
 	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
 	"none",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2022"]
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2017"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -451,5 +456,5 @@ if __name__ == "__main__":
 
     fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table = [i for i in sys.argv[1:]]
     messages = msgStub()
-    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
+    #doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
