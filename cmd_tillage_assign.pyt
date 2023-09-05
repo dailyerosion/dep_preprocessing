@@ -249,6 +249,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     # rc_field_name - name of residue cover
     # cleanup - T or F, whether to log data
 
+    log.debug(f'starting up at: {datetime.datetime.now()}')
     #management calculator
 
     huc12 = fb[-12:]
