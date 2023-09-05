@@ -345,7 +345,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
                         calculated_management = getManagement(adj_rescover, mancrop, coverlist)
                         man_array = np.append(man_array, [int(calculated_management)])
 
-                log.debug(f'srow is {srow}')
+                # log.debug(f'srow is {srow}')
 
     ##            prev_rotate_length = field_rotate_length
                 # print(srow)
@@ -418,7 +418,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
             # print(urow)
             ucur.updateRow(urow)
 
-            log.debug(f'urow is {urow}')
+            # log.debug(f'urow is {urow}')
 
     till_temp = arcpy.CopyRows_management(fbndsTable, opj(sgdb, os.path.basename(tillage_table)))
 
