@@ -217,7 +217,7 @@ def getCropDict(bcover, ccover, gcover, wcover):
 
     return cropDict
 
-def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages):
+def doTillageAssign(fb, lu6, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -243,10 +243,10 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     # tillage_table - output of tillage code
 
     # OTHER NECESSARY
-    # manfield - name of management field
+    # man_field - name of management field
     # bulkDir - bulk processing directory
-    # tillfield - name of tillage code field
-    # rc_field_name - name of residue cover
+    # till_field - name of tillage code field
+    # rc_field - name of residue cover
     # cleanup - T or F, whether to log data
 
     #management calculator
@@ -264,9 +264,9 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     log.debug(f'starting up at: {datetime.datetime.now()}')
     messages.addMessage("Tool: Executing with parameters '")
 
-    # adj_rc_field_name = 'Adj_' + rc_field_name
-    adj_rc_field_name = rc_field_name
-    rc_field_name = adj_rc_field_name.replace('Adj_', 'Pct_')
+    # adj_rc_field = 'Adj_' + rc_field
+    adj_rc_field = rc_field
+    rc_field = adj_rc_field.replace('Adj_', 'Pct_')
 
     ## bulk processing (Scratch) directory
     # if arcpy.Exists(bulkDir):
@@ -296,25 +296,25 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
 
     # fbndsTable = arcpy.TableSelect_analysis(repro, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
     fbndsTable = arcpy.TableSelect_analysis(fb, os.path.join('in_memory', 'fb_' + huc12))#, 'isAG >= 1')
-    df.joinDict(fbndsTable, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU'])
+    df.joinDict(fbndsTable, 'FBndID', lu6_table, 'FBndID', ['CropRotatn', 'GenLU'])
 
     ##zstResCover = tillage_table#paths['mnTillageTable']
     log.debug('determining default management using: ' + tillage_table)
 
-    df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field_name])
+    df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field])
 
     ref_year = 2010 #date DEP CDL land cover stuff starts
     rc_year = int(tillage_table[-4:])#2023
-    lu6_path = pathlib.Path(lu6)
-    acpf_year = lu6_path.parent.parent.parent.name[-4:]
+    lu6_table_path = pathlib.Path(lu6_table)
+    acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
     field_len = rc_year - ref_year + 1
     log.debug(f'field_len is {field_len}')
 
-    arcpy.AddField_management(fbndsTable, manfield, 'TEXT', field_length = field_len)
-    arcpy.AddField_management(fbndsTable, tillfield, 'TEXT', field_length = field_len)
-    arcpy.AddField_management(fbndsTable, adj_rc_field_name, 'FLOAT')
+    arcpy.AddField_management(fbndsTable, man_field, 'TEXT', field_length = field_len)
+    arcpy.AddField_management(fbndsTable, till_field, 'TEXT', field_length = field_len)
+    arcpy.AddField_management(fbndsTable, adj_rc_field, 'FLOAT')
 
-    rc_fields = ['GenLU', manfield, 'CropRotatn', rc_field_name, 'FBndID', tillfield, adj_rc_field_name]
+    rc_fields = ['GenLU', man_field, 'CropRotatn', rc_field, 'FBndID', till_field, adj_rc_field]
 
         ## Values are 0-100 (1% increments)
 
@@ -423,7 +423,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
 
     till_temp_desc = arcpy.da.Describe(till_temp)
     for c in df.getfields(till_temp):
-        if c not in ['OBJECTID', 'FBndID', manfield, tillfield, rc_field_name, adj_rc_field_name]:
+        if c not in ['OBJECTID', 'FBndID', man_field, till_field, rc_field, adj_rc_field]:
             arcpy.DeleteField_management(till_temp, c)
 
     till_table_result = arcpy.CopyRows_management(till_temp, tillage_table)
@@ -441,18 +441,18 @@ if __name__ == "__main__":
         arcpy.AddMessage("Whoo, hoo! Running from Python Window!")
         cleanup = False
 
-        parameters = ['C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\pythonw.exe', 'C:\\DEP\\Scripts\\basics\\cmd_tillage_assign.pyt', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\FB070801050101', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\LU6_070801050101', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\huc070801050101_gee_rc2018', 'Management_CY_2018', 'Till_code_CY_2018', 'Adj_RC_CY_2018', 'D:\\DEP_Proc\\DEMProc\\Manage_dem2013_3m_070801050101', 'linear', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\huc070801050101_tillLinear2018']
-    #     ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-	# "C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
-	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
-	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
-	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2021",
-	# "Management_CY_2021",
-	# "Till_code_CY_2021",
-	# "Adj_RC_CY_2021",
-	# "D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
-	# "none",
-	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2021"]
+        parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
+	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/FB071000081505",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/LU6_071000081505",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/huc071000081505_gee_rc2022",
+	"Management_CY_2022",
+	"Till_code_CY_2022",
+	"Adj_RC_CY_2022",
+	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_071000081505",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/huc071000081505_till2022",
+	"2017",
+	"2022"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -461,7 +461,18 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table = [i for i in sys.argv[1:]]
+    fb, lu6_table, rc_table, man_field_base, till_field_base, rc_field_base, bulkDir, base_tillage_table, start, end = [i for i in sys.argv[1:]]
     messages = msgStub()
-    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
+
+    ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
+    for ACPFyear in ACPFyears:
+        man_field = man_field_base[:-4] + ACPFyear
+        till_field = till_field_base[:-4] + ACPFyear
+        rc_table = rc_table[:-4] + ACPFyear
+        year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
+        options = ['uniform', 'linear', 'none']
+        for option in options:
+            rc_field = rc_field_base[:7] + option.capitalize() + rc_field_base[6:-4] + ACPFyear
+            tillage_table = year_tillage_table.replace('_till', '_till' + option.capitalize())
+            doTillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
