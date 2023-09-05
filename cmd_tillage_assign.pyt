@@ -249,7 +249,6 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
     # rc_field_name - name of residue cover
     # cleanup - T or F, whether to log data
 
-    log.debug(f'starting up at: {datetime.datetime.now()}')
     #management calculator
 
     huc12 = fb[-12:]
@@ -262,7 +261,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
         log, nowYmd, logName, startTime = df.setupLoggingNew(platform.node(), sys.argv[0], huc12)
 
     # ACPF directory where channel and catchment features reside
-
+    log.debug(f'starting up at: {datetime.datetime.now()}')
     messages.addMessage("Tool: Executing with parameters '")
 
     # adj_rc_field_name = 'Adj_' + rc_field_name
