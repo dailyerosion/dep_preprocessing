@@ -439,13 +439,13 @@ if __name__ == "__main__":
 	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2017",
-	"Management_CY_2017",
-	"Till_code_CY_2017",
-	"Adj_RC_CY_2017",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2021",
+	"Management_CY_2021",
+	"Till_code_CY_2021",
+	"Adj_RC_CY_2021",
 	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
 	"none",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2017"]
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2021"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -456,5 +456,5 @@ if __name__ == "__main__":
 
     fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table = [i for i in sys.argv[1:]]
     messages = msgStub()
-    #doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
+    doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkDir, option, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
