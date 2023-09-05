@@ -343,6 +343,8 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
                         calculated_management = getManagement(adj_rescover, mancrop, coverlist)
                         man_array = np.append(man_array, [int(calculated_management)])
 
+                log.debug(f'srow is {srow}')
+
     ##            prev_rotate_length = field_rotate_length
                 # print(srow)
 
@@ -414,6 +416,7 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
             # print(urow)
             ucur.updateRow(urow)
 
+            log.debug(f'urow is {urow}')
 
     till_temp = arcpy.CopyRows_management(fbndsTable, opj(sgdb, os.path.basename(tillage_table)))
 
@@ -423,6 +426,8 @@ def doTillageAssign(fb, lu6, rc_table, manfield, tillfield, rc_field_name, bulkD
             arcpy.DeleteField_management(till_temp, c)
 
     till_table_result = arcpy.CopyRows_management(till_temp, tillage_table)
+
+    log.debug(f'wrapping up at: {datetime.datetime.now()}')
 
     return till_table_result
 
@@ -435,17 +440,18 @@ if __name__ == "__main__":
         arcpy.AddMessage("Whoo, hoo! Running from Python Window!")
         cleanup = False
 
-        parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2021",
-	"Management_CY_2021",
-	"Till_code_CY_2021",
-	"Adj_RC_CY_2021",
-	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
-	"none",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2021"]
+        parameters = ['C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3\\pythonw.exe', 'C:\\DEP\\Scripts\\basics\\cmd_tillage_assign.pyt', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\FB070801050101', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\LU6_070801050101', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\huc070801050101_gee_rc2018', 'Management_CY_2018', 'Till_code_CY_2018', 'Adj_RC_CY_2018', 'D:\\DEP_Proc\\DEMProc\\Manage_dem2013_3m_070801050101', 'linear', 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050101.gdb\\huc070801050101_tillLinear2018']
+    #     ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
+	# "C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
+	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/FB070801050101",
+	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/LU6_070801050101",
+	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_gee_rc2021",
+	# "Management_CY_2021",
+	# "Till_code_CY_2021",
+	# "Adj_RC_CY_2021",
+	# "D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050101",
+	# "none",
+	# "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050101.gdb/huc070801050101_tillNone2021"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
