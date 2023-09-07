@@ -329,8 +329,10 @@ def doTillageAssign(fb, lu6, rc_table, man_field, till_field, rc_field, bulkDir,
     ##with arcpy.da.SearchCursor(fbndsTable, rc_fields, where_clause = where) as scur:
     with arcpy.da.SearchCursor(fbndsTable, rc_fields, where_clause = 'GenLU <> \'LT 10 ac\' AND GenLU <> \'Forest\' AND GenLU <> \'Pasture|Grass|Hay\' AND GenLU <> \'Water/wetland\'') as scur:
         for srow in scur:
-            croprotate = srow[2][:field_len]
-            if croprotate is not None:
+            if srow[2] is not None:
+                croprotate = srow[2][:field_len]
+            # if croprotate is not None:
+                # go two years back in crop rotation to align with spring residue cover type (e.g. 2021 res cover is from 2020 crop)
                 mancrop = croprotate[-2]
     ##            field_rotate_length = len(croprotate)
                 if srow[3] is not None:
@@ -369,14 +371,16 @@ def doTillageAssign(fb, lu6, rc_table, man_field, till_field, rc_field, bulkDir,
             managements = ''
             got_man = False
             # croprotate = urow[2]
-            croprotate = urow[2][:field_len]
+            if urow[2] is None:
             # no data on crop rotation, managements = 0
-            if croprotate is None:
+            # if croprotate is None:
                 # use rotate_length to determine?
-                managements = '0' * field_len#11
+                managements = '0' * field_len
 
             # else try and determine tillage practice by last crop residue cover
             else:
+                croprotate = urow[2][:field_len]
+                # go two years back in crop rotation to align with spring residue cover type (e.g. 2021 res cover is from 2020 crop)
                 mancrop = croprotate[-2]
 
                 if urow[3] is not None and urow[0] not in ['Forest', 'Pasture|Grass|Hay', "Water/wetland"]:
@@ -419,14 +423,12 @@ def doTillageAssign(fb, lu6, rc_table, man_field, till_field, rc_field, bulkDir,
 
             # log.debug(f'urow is {urow}')
 
-    till_temp = arcpy.CopyRows_management(fbndsTable, opj(sgdb, os.path.basename(tillage_table)))
-
-    till_temp_desc = arcpy.da.Describe(till_temp)
-    for c in df.getfields(till_temp):
+    till_temp_desc = arcpy.da.Describe(fbndsTable)
+    for c in df.getfields(fbndsTable):
         if c not in ['OBJECTID', 'FBndID', man_field, till_field, rc_field, adj_rc_field]:
-            arcpy.DeleteField_management(till_temp, c)
+            arcpy.DeleteField_management(fbndsTable, c)
 
-    till_table_result = arcpy.CopyRows_management(till_temp, tillage_table)
+    till_table_result = arcpy.CopyRows_management(fbndsTable, tillage_table)
 
     log.debug(f'wrapping up at: {datetime.datetime.now()}')
 
@@ -443,14 +445,14 @@ if __name__ == "__main__":
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
 	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/FB071000081505",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/LU6_071000081505",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/huc071000081505_gee_rc2022",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/FB070802060202",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/LU6_070802060202",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/huc070802060202_gee_rc2022",
 	"Management_CY_2022",
 	"Till_code_CY_2022",
 	"Adj_RC_CY_2022",
-	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_071000081505",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07100008/idepACPF071000081505.gdb/huc071000081505_till2022",
+	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070802060202",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/huc070802060202_till2022",
 	"2017",
 	"2022"]
 
