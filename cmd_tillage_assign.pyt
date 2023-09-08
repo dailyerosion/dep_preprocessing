@@ -445,14 +445,14 @@ if __name__ == "__main__":
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
 	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/FB070802060202",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/LU6_070802060202",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/huc070802060202_gee_rc2022",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/FB090300090306",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/LU6_090300090306",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_mn_rc2022",
 	"Management_CY_2022",
 	"Till_code_CY_2022",
 	"Adj_RC_CY_2022",
-	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_070802060202",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080206/idepACPF070802060202.gdb/huc070802060202_till2022",
+	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_090300090306",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_till2022",
 	"2017",
 	"2022"]
 
@@ -463,14 +463,17 @@ if __name__ == "__main__":
         # clean up the folder after done processing
         cleanup = True
 
-    fb, lu6_table, rc_table, man_field_base, till_field_base, rc_field_base, bulkDir, base_tillage_table, start, end = [i for i in sys.argv[1:]]
+    fb, lu6_table, rc_table_base, man_field_base, till_field_base, rc_field_base, bulkDir, base_tillage_table, start, end = [i for i in sys.argv[1:]]
     messages = msgStub()
 
     ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
     for ACPFyear in ACPFyears:
         man_field = man_field_base[:-4] + ACPFyear
         till_field = till_field_base[:-4] + ACPFyear
-        rc_table = rc_table[:-4] + ACPFyear
+        rc_table = rc_table_base[:-4] + ACPFyear
+        if 'mn_rc' in rc_table:
+            if not arcpy.Exists(rc_table):
+                rc_table = rc_table.replace('mn_rc', 'gee_rc')
         year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
         options = ['uniform', 'linear', 'none']
         for option in options:
