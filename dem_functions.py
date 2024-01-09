@@ -188,19 +188,19 @@ def createBasicDirectories(node, ACPFyear, uversion = ''):
     '''Creates the most basic DEP directories, ACPF directory and DEP base directory as strings'''
     # depBase - location of most DEP inputs and outputs
     # acpfBase - location of DEP/ACPF management data geodatabases
-##    node = listy[0]
-##    ACPFyear = listy[1]
     if 'EL3354-02' in node.upper():# or 'DA214B-11' in node.upper():
         acpfStart = 'D:\\DEP'
-        depBase = 'O:\\DEP'
+        depBase = 'M:\\DEP'
+    elif 'EL3321-M10' in node.upper():
+        # run everything local on laptop
+        acpfStart = 'C:\\DEP'
+        depBase = 'C:\\DEP'
     else:
         acpfStart = '\\\\EL3354-02\\D$\\DEP'#\\Man_Data_ACPF\\dep_ACPF' + ACPFyear
-        depBase = '\\\\EL3354-02\\O$\\DEP'
-        # acpfStart = '\\\\EL3354-02.AE.IASTATE.EDU\\D$\\DEP'#\\Man_Data_ACPF\\dep_ACPF' + ACPFyear
-        # depBase = '\\\\EL3354-02.AE.IASTATE.EDU\\O$\\DEP'
+        depBase = '\\\\EL3354-02\\M$\\DEP'
 
     # basedata never changes with version
-    basedataDir = opj(depBase, 'Basedata_Summaries')
+    basedataDir = opj(acpfStart, 'Basedata_Summaries')
 
     # see above
     acpfBase = opj(acpfStart + uversion, 'Man_Data_ACPF\\dep_ACPF'+ ACPFyear)
@@ -208,7 +208,7 @@ def createBasicDirectories(node, ACPFyear, uversion = ''):
     otherBase = opj(depBase, 'Man_Data_Other')
     depBase += uversion
 
-    return acpfBase, depBase, basedataDir, otherBase
+    return acpfBase, depBase, basedataDir, otherBase, acpfStart
 
 
 def loadInterpDict():
@@ -224,7 +224,7 @@ def loadBasicVariablesDict(node, ACPFyear, uversion = ''):
 ##    ACPFyear = listy[1]
 ##    j = ()
 
-    acpfBase, depBase, basedataDir, otherBase = createBasicDirectories(node, ACPFyear, uversion)
+    acpfBase, depBase, basedataDir, otherBase, acpfStart = createBasicDirectories(node, ACPFyear, uversion)
 
     if int(ACPFyear) > 2021:
         MWHUC12_ACPF = 'MW_HUC12_v2022'
@@ -242,6 +242,7 @@ def loadBasicVariablesDict(node, ACPFyear, uversion = ''):
     basicDict = {
     "depBase" : depBase,
     "acpfBase" : acpfBase,
+    "acpfStart" : acpfStart,
     "basedataDir" : basedataDir,
     "otherBase" : otherBase,
     "mwHuc12s5070" : opj(basedataDir, 'Basedata_5070.gdb', MWHUC12_ACPF),
@@ -350,6 +351,8 @@ def loadVariablesDict(node, ACPFyear, huc12, outEPSG, interpType, cellSize, nowY
         depMetadata = opj(depBase, 'toolMetadata')
 
         gullyOutputs = opj(depBase, 'Gully_Outputs')
+
+        depOutput = opj(locationsDict['acpfStart'], 'DEP_Outputs')
 
         huc8 = huc12[0:8]
         uhuc12 = '_' + huc12
@@ -461,6 +464,7 @@ def loadVariablesDict(node, ACPFyear, huc12, outEPSG, interpType, cellSize, nowY
         "SSURGO" : opj(ACPFDir, 'gSSURGO'),
         # "rc_table" : opj(ACPFDir, "ResCover_" + huc12),
         "manField" : 'Management_CY_' + ACPFyear,
+        "rotField" : 'CropRotatn_CY_' + ACPFyear,
         "tillField": 'Till_code_CY_' + ACPFyear,
         "resCoverField": 'Adj_RC_CY_' + ACPFyear,
 
@@ -615,20 +619,19 @@ def loadVariablesDict(node, ACPFyear, huc12, outEPSG, interpType, cellSize, nowY
         "eptBaseDir" : opj(locationsDict["eleBaseDir"], 'ept'),
 
         "ept_wesm_monthly_file" : opj(locationsDict["eleBaseDir"], 'ept', 'ept.gdb', ept_first_of_month_name),
-        "sampleOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['samples']) + '.json'),
-        "sampleDefOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['smpldef', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['samples']) + '.json'),
+        "sampleOutput" : opj(depOutput, '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['samples']) + '.json'),
+        "sampleDefOutput" : opj(depOutput, '_'.join(['smpldef', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['samples']) + '.json'),
         # nulls are stored with same basename as samples (they are null samples)
-        "nullOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['nulls']) + '.json'),
-####        "nullDefOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['nulls']) + '.json'),
-        "fieldBoundariesOutput": opj(depBase, 'DEP_Outputs', '_'.join(['fb', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['fieldBoundaries']) + '.json'),
-        "LU6Output": opj(depBase, 'DEP_Outputs', '_'.join(['lu6', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['LU6']) + '.csv'),
-        "areaOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['areas', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['areas']) + '.json'),
-        # "tillageOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['tillage', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['tillages']) + '.json'),
-        "snapOutput" : opj(depBase, 'DEP_Outputs', '_'.join(['snap', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['snaps']) + '.json'),
+        "nullOutput" : opj(depOutput, '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['nulls']) + '.json'),
+####        "nullDefOutput" : opj(depOutput, '_'.join(['smpl', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['nulls']) + '.json'),
+        "fieldBoundariesOutput": opj(depOutput, '_'.join(['fb', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['fieldBoundaries']) + '.json'),
+        "LU6Output": opj(depOutput, '_'.join(['lu6', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['LU6']) + '.csv'),
+        "areaOutput" : opj(depOutput, '_'.join(['areas', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['areas']) + '.json'),
+        # "tillageOutput" : opj(depOutput, '_'.join(['tillage', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['tillages']) + '.json'),
+        "snapOutput" : opj(depOutput, '_'.join(['snap', 'acpf' + ACPFyear, nowYmd]), os.path.basename(locationsDict['snaps']) + '.json'),
 
 
         "pickleDistanceFile" : opj(locationsDict['cutProcDir'], 'search_' + huc12 + '_' + interpType + '.pkl')})
-##        print(time.clock())
 
         return locationsDict
 
@@ -1603,8 +1606,11 @@ def setAllSearchDistances(inFC, wsSearchDistFld, minFrDistFld, frFld, minElFld, 
     try:
         ## bring in the max median buffer for each fill region
         arcpy.JoinField_management(inFC, frFld, maxWsMedian, frFld, [maxWsMdnFld, mdnFracFld])
-        tryAddField(inFC, wsSearchDistFld, "DOUBLE")
+##        df.tryAddField(inFC, wsSearchDistFld, "DOUBLE")
+##        df.tryAddField(inFC, wsMdnSearchDistFld, "DOUBLE")
+##        df.tryAddField(inFC, pntMdnSearchDistFld, "DOUBLE")
 
+        tryAddField(inFC, wsSearchDistFld, "DOUBLE")
         tryAddField(inFC, wsMdnSearchDistFld, "DOUBLE")
         tryAddField(inFC, pntMdnSearchDistFld, "DOUBLE")
 
@@ -1628,16 +1634,22 @@ def setAllSearchDistances(inFC, wsSearchDistFld, minFrDistFld, frFld, minElFld, 
                 minFrSearchDist = crestWidth + (frDepth)*0.01*(1/maxBackslope)*srchMult
                 maxFrSearchDist = crestWidth + (frDepth)*0.01*(1/minBackslope)*srchMult
             # set base distance is srchMult * minDist3 * 1.25 (minDist3 could be ~80% depth, so extrapolate to 100% depth)
-                if row[1] == None:
-                    baseDist = minFrSearchDist
-                    baseErrorList.append(str(row[2]))
-                    ## errors seem to be due to no minFrDist data
-    ##row is [None, None, 4572, 25795, 25800, 0.0, None, None, 0.0]
-                ## if upstream points are farther to median than fill region distance, use greater distance #why?
-                elif row[ucur.fields.index(maxWsMdnFld)] > row[1]:
-                    actFrSearchDist = crestWidth + 1.25*row[ucur.fields.index(maxWsMdnFld)]*srchMult
-                    baseDistPre = min(maxFrSearchDist, actFrSearchDist)
-                    baseDist = max(minFrSearchDist, baseDistPre)
+                # fix all None by setting equal to else
+                if row[ucur.fields.index(maxWsMdnFld)] is not None:
+                    if row[1] == None:
+                        baseDist = minFrSearchDist
+                        baseErrorList.append(str(row[2]))
+                        ## errors seem to be due to no minFrDist data
+        ##row is [None, None, 4572, 25795, 25800, 0.0, None, None, 0.0]
+                    ## if upstream points are farther to median than fill region distance, use greater distance #why?
+                    elif row[ucur.fields.index(maxWsMdnFld)] > row[1]:
+                        actFrSearchDist = crestWidth + 1.25*row[ucur.fields.index(maxWsMdnFld)]*srchMult
+                        baseDistPre = min(maxFrSearchDist, actFrSearchDist)
+                        baseDist = max(minFrSearchDist, baseDistPre)
+                    else:
+                        actFrSearchDist = crestWidth + 1.25*row[1]*srchMult
+                        baseDistPre = min(maxFrSearchDist, actFrSearchDist)
+                        baseDist = max(minFrSearchDist, baseDistPre)
                 else:
                     actFrSearchDist = crestWidth + 1.25*row[1]*srchMult
                     baseDistPre = min(maxFrSearchDist, actFrSearchDist)
@@ -1647,10 +1659,15 @@ def setAllSearchDistances(inFC, wsSearchDistFld, minFrDistFld, frFld, minElFld, 
 
             # calculate ws median search distance, if crossing median add in highway width`
                 ## fr with all points in median only get half the median width
-                if row[ucur.fields.index(maxWsMdnFld)] > 0 and row[ucur.fields.index(mdnFracFld)] == 1.0:
-                    wsTotalDist = baseDist + 0.5*row[ucur.fields.index(maxWsMdnFld)]
-                elif row[ucur.fields.index(maxWsMdnFld)] > 0:
-                    wsTotalDist = baseDist + row[ucur.fields.index(maxWsMdnFld)]
+                if row[ucur.fields.index(maxWsMdnFld)] is not None:
+                    if row[ucur.fields.index(maxWsMdnFld)] > 0 and row[ucur.fields.index(mdnFracFld)] == 1.0:
+                        wsTotalDist = baseDist + 0.5*row[ucur.fields.index(maxWsMdnFld)]
+                    elif row[ucur.fields.index(maxWsMdnFld)] > 0:
+                        wsTotalDist = baseDist + row[ucur.fields.index(maxWsMdnFld)]
+                    else:
+                        wsTotalDist = baseDist
+                        ## set nulls to zero
+                        row[ucur.fields.index(maxWsMdnFld)] = 0.0
                 else:
                     wsTotalDist = baseDist
                     ## set nulls to zero
@@ -1660,10 +1677,13 @@ def setAllSearchDistances(inFC, wsSearchDistFld, minFrDistFld, frFld, minElFld, 
 
             # calculate point median search distance, if crossing median add in highway width
                 ## fr with all points in median only get half the median width
-                if row[ucur.fields.index(maxWsMdnFld)] > 0 and row[ucur.fields.index(mdnFracFld)] == 1.0:
-                    pntTotalDist = baseDist*2 + 0.5*row[ucur.fields.index(maxWsMdnFld)]
-                elif row[ucur.fields.index(maxWsMdnFld)] > 0:
-                    pntTotalDist = baseDist*2 + row[ucur.fields.index(maxWsMdnFld)]
+                if row[ucur.fields.index(maxWsMdnFld)] is not None:
+                    if row[ucur.fields.index(maxWsMdnFld)] > 0 and row[ucur.fields.index(mdnFracFld)] == 1.0:
+                        pntTotalDist = baseDist*2 + 0.5*row[ucur.fields.index(maxWsMdnFld)]
+                    elif row[ucur.fields.index(maxWsMdnFld)] > 0:
+                        pntTotalDist = baseDist*2 + row[ucur.fields.index(maxWsMdnFld)]
+                    else:
+                        pntTotalDist = baseDist*2
                 else:
                     pntTotalDist = baseDist*2
 
@@ -1686,7 +1706,7 @@ def setAllSearchDistances(inFC, wsSearchDistFld, minFrDistFld, frFld, minElFld, 
 
     except Exception as e:
 ##        log.debug(e.message)
-        arcpy.AddError(e.message)
+##        arcpy.AddError(e.message)
         print('row is ' + str(row))
 
         # Get the traceback object
@@ -2502,7 +2522,10 @@ def joinDict(in_data, in_field, join_data, join_field, fields_to_join, in_fields
         else:
             newType = fieldObj.type
         ##  Add the field with appropriate type
-        arcpy.AddField_management(in_data, in_fields_to_add[i], newType)
+        if newType == 'TEXT':
+            arcpy.AddField_management(in_data, in_fields_to_add[i], newType, field_length = fieldObj.length)
+        else:
+            arcpy.AddField_management(in_data, in_fields_to_add[i], newType)
       
     with arcpy.da.UpdateCursor(in_data, [in_field] +  in_fields_to_add) as ucur:  
         for urow in ucur:  
