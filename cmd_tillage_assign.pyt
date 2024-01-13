@@ -18,15 +18,15 @@ import numpy as np
 login = os.getlogin()
     
 if login == 'bkgelder':
-    boxes = ['C:\\Users\\bkgelder\\Box\\Data_Sharing\\Scripts\\basics', 'O:\\DEP\\Scripts\\basics']
+    boxes = ['C:\\Users\\bkgelder\\Box\\Data_Sharing\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
 else:
-    boxes = ['C:\\Users\\idep2\\Box\\Scripts\\basics', 'O:\\DEP\\Scripts\\basics']
+    boxes = ['C:\\Users\\idep2\\Box\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
 
 for box in boxes:
     if os.path.isdir(box):
         sys.path.append(box)
 
-import dem_functions2 as df
+import dem_functions as df
 
 
 class msgStub:
@@ -87,8 +87,8 @@ class Tool(object):
             direction="Input")
         
         param4 = arcpy.Parameter(
-            name="tillage_field",
-            displayName="Yearly Tillage Field",
+            name="residue_field",
+            displayName="Yearly Residue Field",
             datatype="GPString",
             parameterType='Required',
             direction="Input")
