@@ -27,7 +27,6 @@ import sys
 import os
 import traceback
 #import datetime
-import time
 import platform
 #from arcpy import env
 from arcpy.sa import *
@@ -56,170 +55,152 @@ class Toolbox(object):
         self.tools = [Tool]
 
 
-class Tool(object):
-    def __init__(self):
-        """Define the tool (tool name is the name of the class)."""
-        self.label = "Sample input rasters, feature classes, and tables to build DEP/WEPP inputs"
-        self.description = "Using flowpaths, sample the elevation, distance along flowpath, field boundary, soils and irrigation datasets. May add BMPs later."
-        self.canRunInBackground = False
+# class Tool(object):
+#     def __init__(self):
+#         """Define the tool (tool name is the name of the class)."""
+#         self.label = "Sample input rasters, feature classes, and tables to build DEP/WEPP inputs"
+#         self.description = "Using flowpaths, sample the elevation, distance along flowpath, field boundary, soils and irrigation datasets. May add BMPs later."
+#         self.canRunInBackground = False
 
-    def getParameterInfo(self):
-        """Define parameter definitions"""
+#     def getParameterInfo(self):
+#         """Define parameter definitions"""
 
-        param0 = arcpy.Parameter(
-            name="monthly_ept_wesm_mashup",
-            displayName="EPT WESM Merged Features",
-            datatype="DEFeatureClass",
-            parameterType='Required',
-            direction="Input")
+#         param0 = arcpy.Parameter(
+#             name = "fElevFile",
+#             displayName="Input Punched Elevation Model",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param1 = arcpy.Parameter(
-            name="dem_polygon",
-            displayName="Buffered HUC12 Feature",
-            datatype="DEFeatureClass",
-            parameterType='Required',
-            direction="Input")
+#         param1 = arcpy.Parameter(
+#             name="fpRasterInit",
+#             displayName="Flowpath Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param2 = arcpy.Parameter(
-            name = "pdal_exe",
-            displayName="PDAL.exe Location",
-            datatype="DEFile",
-            parameterType='Required',
-            direction="Input")
+#         param2 = arcpy.Parameter(
+#             name="fplRasterInit",
+#             displayName="Flowpath Length Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param3 = arcpy.Parameter(
-            name = "gsds",
-            displayName="Integer Resolution/Ground Sample Distance of output rasters, multiples joined by comma",
-            datatype="GPString",
-            parameterType='Required',
-            direction="Input")
-        param3.values = "3,2,1"#default gsds value to create 3, 2, and 1 meter rasters
+#         param3 = arcpy.Parameter(
+#             name="gordRaster",
+#             displayName="Grid Order Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param4 = arcpy.Parameter(
-            name = "fElevFile",
-            displayName="Output Pit-Filled Elevation Model",
-            datatype="DERasterDataset",
-            parameterType='Required',
-            direction="Output")
+#         param4 = arcpy.Parameter(
+#             name="ss",
+#             displayName="Soil Survey Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param5 = arcpy.Parameter(
-            name = "procDir",
-            displayName="Local Processing Directory",
-            datatype="DEFolder",
-            parameterType='Optional',
-            direction="Input")
+#         param5 = arcpy.Parameter(
+#             name="irrigation_map",
+#             displayName="Grid Order Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param6 = arcpy.Parameter(
-            name="snap",
-            displayName="Snap Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Input")
+#         param6 = arcpy.Parameter(
+#             name="snap",
+#             displayName="ACPF Field Boundaries",
+#             datatype="DEFeatureClass",
+#             parameterType='Required',
+#             direction="Input")
         
-        param7 = arcpy.Parameter(
-            name = "bareEarthReturnMinFile",
-            displayName="Output Bare Earth Minimum Elevation Model",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#     arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
+#               lu6, manfield, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup]
+#         param7 = arcpy.Parameter(
+#             name = "lu6",
+#             displayName="Output Bare Earth Minimum Elevation Model",
+#             datatype="DETable",
+#             parameterType='Required',
+#             direction="Input")
         
-        param8 = arcpy.Parameter(
-            name = "firstReturnMaxFile",
-            displayName="Output First Return Maximum Elevation/Surface Model",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#         param8 = arcpy.Parameter(
+#             name = "manfield",
+#             displayName="Output First Return Maximum Elevation/Surface Model",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param9 = arcpy.Parameter(
-            name = "cntFile",
-            displayName="Output Bare Earth Return Count Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#         param9 = arcpy.Parameter(
+#             name = "soilsDir",
+#             displayName="Output Bare Earth Return Count Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Input")
         
-        param10 = arcpy.Parameter(
-            name = "cnt1rFile",
-            displayName="Output First Return Count Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#         param10 = arcpy.Parameter(
+#             name = "output",
+#             displayName="Output Sample table",
+#             datatype="DETable",
+#             parameterType='Required',
+#             direction="Output")
         
-        param11 = arcpy.Parameter(
-            name = "int1rMinFile",
-            displayName="Output Intensity First Return Minimum Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#         param11 = arcpy.Parameter(
+#             name = "nullOutput",
+#             displayName="Output Intensity First Return Minimum Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Output")
         
-        param12 = arcpy.Parameter(
-            name = "int1rMaxFile",
-            displayName="Output Intensity First Return Maximum Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
+#         param12 = arcpy.Parameter(
+#             name = "int1rMaxFile",
+#             displayName="Output Intensity First Return Maximum Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Output")
         
-        param13 = arcpy.Parameter(
-            name = "intBeMaxFile",
-            displayName="Output Intensity Bare Earth Maximum Raster",
-            datatype="DERasterDataset",
-            parameterType='Optional',
-            direction="Output")
-        
-        param14 = arcpy.Parameter(
-            name = "breakpolys",
-            displayName="Output HUC12 Merged Breakline Polygon Features",
-            datatype="DEFeatureClass",
-            parameterType='Optional',
-            direction="Output")
-        
-        param15 = arcpy.Parameter(
-            name = "breaklines",
-            displayName="Output HUC12 Merged Breakline Polyline Features",
-            datatype="DEFeatureClass",
-            parameterType='Optional',
-            direction="Output")
-        
-        param16 = arcpy.Parameter(
-            name = "ept_wesm_project_file",
-            displayName="EPT WESM Feature for AOI",
-            datatype="DEFeatureClass",
-            parameterType='Optional',
-            direction="Output")
-                
-        params = [param0, param1, param2, param3,
-                  param4, param5, param6, param7,
-                  param8, param9, param10, param11,
-                  param12, param13, param14, param15,
-                  param16]
-        return params
+#         param13 = arcpy.Parameter(
+#             name = "intBeMaxFile",
+#             displayName="Output Intensity Bare Earth Maximum Raster",
+#             datatype="DERasterDataset",
+#             parameterType='Required',
+#             direction="Output")
+                        
+#         params = [param0, param1, param2, param3,
+#                   param4, param5, param6, param7,
+#                   param8, param9, param10, param11,
+#                   param12, param13, param14, param15,
+#                   param16]
+#         return params
 
 
-    def isLicensed(self):
-        """Set whether tool is licensed to execute."""
-        return True
+#     def isLicensed(self):
+#         """Set whether tool is licensed to execute."""
+#         return True
 
-    def updateParameters(self, parameters):
-        """Modify the values and properties of parameters before internal
-        validation is performed.  This method is called whenever a parameter
-        has been changed."""
-        return
+#     def updateParameters(self, parameters):
+#         """Modify the values and properties of parameters before internal
+#         validation is performed.  This method is called whenever a parameter
+#         has been changed."""
+#         return
 
-    def updateMessages(self, parameters):
-        """Modify the messages created by internal validation for each tool
-        parameter.  This method is called after internal validation."""
-        return
+#     def updateMessages(self, parameters):
+#         """Modify the messages created by internal validation for each tool
+#         parameter.  This method is called after internal validation."""
+#         return
 
-    def execute(self, parameters, messages):
-        """The source code of the tool."""
-        cleanup = False
-        doSampler(parameters[0].valueAsText, cleanup, messages)
-        return
+#     def execute(self, parameters, messages):
+#         """The source code of the tool."""
+#         cleanup = False
+#         doSampler(parameters[0].valueAsText, cleanup, messages)
+#         return
 
-    def postExecute(self, parameters):
-        """This method takes place after outputs are processed and
-        added to the display."""
-        return
+#     def postExecute(self, parameters):
+#         """This method takes place after outputs are processed and
+#         added to the display."""
+#         return
 
+# def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
+#               lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup, messages):
 
 
 if __name__ == "__main__":
@@ -255,11 +236,11 @@ if __name__ == "__main__":
 
     messages = msgStub()
 
-def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
-              lu6, manfield, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup, messages):
+    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, \
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir = [s for s in sys.argv[2:]
 
     arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
-              lu6, manfield, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup]
+              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup]
 
     for a in arguments:
         if a == arguments[0]:
@@ -290,7 +271,7 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
         #     log.warning('flib_metadata does not exist')
         # if not os.path.isfile(derivative_metadata):
         #     log.warning('derivative_metadata does not exist')
-        log.info("Beginning execution: " + time.asctime())
+        log.info("Beginning execution:")
         log.debug('sys.argv is: ' + str(sys.argv) + '\n')
         log.info("Processing HUC: " + huc12)
 
@@ -337,12 +318,6 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
 # nullOutput = sys.argv[12]#paths["nulls"]#Output"]#sys.argv[10]
 # null_flowpaths = sys.argv[13] + '_copy'#paths['null_flowpaths']
 
-# ## bulk processing (Scratch) directory
-# bulkDir = sys.argv[14]#paths['samplerProcDir']#sys.argv[3]
-# if arcpy.Exists(bulkDir):
-#     arcpy.Delete_management(bulkDir)
-# os.makedirs(bulkDir)
-
 #-------------------------------------------------------------------------------
         ## SSURGO fiscal year
         solYear = os.path.basename(soilsDir)[-4:]
@@ -353,15 +328,15 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
         cropRotatnFieldName = fields['rotfield']#'CropRotatn_CY_' + str(int(ACPFyear))
         managementFieldName = fields['manfield']#'Management_CY_' + str(int(ACPFyear))
 
-        log.info(cropRotatnFieldName)
-        log.info(managementFieldName)
+        log.info(f"cropRotatnFieldName is {cropRotatnFieldName}")
+        log.info(f"managementFieldName is {managementFieldName}")
 
     ## use ACPF directory as workspace since 2 of the 5 rasters or feature classes we need are here already
         arcpy.env.workspace = os.path.dirname(fieldBoundaries)#fileGDB
 
         ## convert field polygons to raster so we can use sample
         if arcpy.Exists(fieldBoundaries) and arcpy.Exists(gordRaster):
-        ##        print('processing field boundaries')
+            log.info('valid boundaries and soils, processing')
 
             gord = Raster(gordRaster)#os.path.join(gordDir, 'gord_' + huc12 + '.tif'))
 
@@ -370,11 +345,8 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
             sgdb = arcpy.env.scratchGDB
             sfldr = arcpy.env.scratchFolder
 
-        ## convert field polygons from ACPF to raster so we can use sample
-            repro = arcpy.Project_management(fieldBoundaries, os.path.join(sgdb, 'fbnds'), gord.spatialReference)
-            # switched to FTR to match previous flowpath step
-    ####        ftr2 = arcpy.FeatureToRaster_conversion(repro, 'FBndID', opj(bulkDir, 'FBnd' + huc12 + '.tif'))
-        ####        ptr2 = arcpy.PolygonToRaster_conversion(repro, 'FBndID', bulkDir + '\\ptr_FBnd' + huc12 + '.tif',"CELL_CENTER")#,"NONE",str(fp.meanCellHeight))
+        # ## convert field polygons from ACPF to raster so we can use sample
+        #     repro = arcpy.Project_management(fieldBoundaries, os.path.join(sgdb, 'fbnds'), gord.spatialReference)
 
         ## relative file for ACPF soil data
             ssRepro = arcpy.ProjectRaster_management(ss, os.path.join(sgdb, 'ssurgo'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
@@ -383,7 +355,6 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
             desc_bnd = arcpy.Describe(fieldBoundaries)#wbd)
             extent = desc_bnd.extent
             elev = Raster(pElevFile)
-    ##        extent = elev.extent
 
             # clip extent needs to be in USGS Albers
             # buffer boundary extent by 10000m to make sure we get a large enough irrigation raster (has caused excess NoData issues otherwise)
@@ -412,13 +383,11 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
                     fpLenCm = Raster(fplRaster)
 
                     arcpy.env.snapRaster = fp#elev
-    ##                arcpy.env.extent = fp#elev
                     arcpy.env.cellSize = fp#elev
                 ## create sample table
-            ##        print('sampling')
+                    log.debug('sampling')
                     sample_list = [elev, fpLenCm, ssRepro, gord, irrigation_reproject]
                     sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
-    ##                print('rows in sampleRaw1 is ' + str(arcpy.GetCount_management(sampleRaw1)))
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
                     ssurgo_field_name = df.getfields(sampleRaw1, 'ssurgo*')[0]
@@ -429,7 +398,7 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
                     
                     hopefullyEmptyList = [s[0] for s in arcpy.da.SearchCursor(sampleRaw1, [ssurgo_field_name], where_clause = ssurgo_field_name + ' IS NULL')]
                     if len(hopefullyEmptyList) > 0:
-    ##                    print('resampling due to small gaps in SSURGO')
+                        log.info('resampling due to small gaps in SSURGO')
                         ssReproCopy = arcpy.CopyRaster_management(ssRepro, str(ssRepro) + '_gaps')
                         joinFields = df.getfields(ssRepro)[3:]
                         ssReproName = str(ssRepro)
@@ -441,8 +410,6 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
                         arcpy.JoinField_management(ssRepro, 'VALUE', ss, 'VALUE', joinFields)
                         arcpy.Delete_management(sampleRaw1)
                         sampleRaw1 = Sample(sample_list, fp, os.path.join('in_memory', 'smpl_raw6_' + huc12), 'NEAREST')
-    ##                    sampleRaw1 = Sample([elev, fpLenCm, ftr2.getOutput(0), ssRepro, gord], fp, 'in_memory\\smpl_raw_' + huc12, 'NEAREST')
-                        
 
                     srFp = arcpy.Describe(fp).spatialReference
                     xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
@@ -629,4 +596,4 @@ def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation
         sys.exit(1)
 
     finally:
-        log.warning("Finished at " + time.asctime())
+        log.warning("Finished")
