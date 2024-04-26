@@ -44,15 +44,15 @@ class msgStub:
     def addWarningMessage(self,text):
         arcpy.AddWarningMessage(text)
 
-class Toolbox(object):
-    def __init__(self):
-        """Define the toolbox (the name of the toolbox is the name of the
-        .pyt file)."""
-        self.label = "Toolbox"
-        self.alias = "toolbox"
+# class Toolbox(object):
+#     def __init__(self):
+#         """Define the toolbox (the name of the toolbox is the name of the
+#         .pyt file)."""
+#         self.label = "Toolbox"
+#         self.alias = "toolbox"
 
-        # List of tool classes associated with this toolbox
-        self.tools = [Tool]
+#         # List of tool classes associated with this toolbox
+#         self.tools = [Tool]
 
 
 # class Tool(object):
@@ -237,7 +237,10 @@ if __name__ == "__main__":
     messages = msgStub()
 
     pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, \
-        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir = [s for s in sys.argv[2:]
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir = [s for s in sys.argv[2:]]
+
+    # switch a text 'True' into a real Python True
+    cleanup = True if cleanup == "True" else False
 
     arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
               lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup]
@@ -258,14 +261,16 @@ if __name__ == "__main__":
     arcpy.env.ZResolution = "0.01"
 
     try:
-        huc12, huc8, named_cell_size = df.figureItOut(pElevFile)
+        huc12, huc8 = df.figureItOut(pElevFile)
 
         if cleanup:
             # log to file only
             log, nowYmd, logName, startTime = df.setupLoggingNoCh(platform.node(), sys.argv[0], huc12)
+            arcpy.SetLogHistory = False
         else:
             # log to file and console
             log, nowYmd, logName, startTime = df.setupLoggingNew(platform.node(), sys.argv[0], huc12)
+            arcpy.SetLogHistory = True
 
         # if not os.path.isfile(flib_metadata_template):
         #     log.warning('flib_metadata does not exist')
@@ -274,6 +279,7 @@ if __name__ == "__main__":
         log.info("Beginning execution:")
         log.debug('sys.argv is: ' + str(sys.argv) + '\n')
         log.info("Processing HUC: " + huc12)
+        messages.addMessage("Log file at " + logName)
 
         if procDir != "":
             if os.path.isdir(procDir):
@@ -341,7 +347,9 @@ if __name__ == "__main__":
             gord = Raster(gordRaster)#os.path.join(gordDir, 'gord_' + huc12 + '.tif'))
 
             arcpy.env.snapRaster = gordRaster#fp#elev
-            arcpy.env.cellSize = gordRaster#fp#elev
+            gordRastObj = arcpy.Raster(gordRaster)
+            named_cell_size = gordRastObj.meanCellHeigth
+            arcpy.env.cellSize = named_cell_size#gordRaster#fp#elev
             sgdb = arcpy.env.scratchGDB
             sfldr = arcpy.env.scratchFolder
 
@@ -437,7 +445,7 @@ if __name__ == "__main__":
 
 
                 ## bring in field land cover and management/residue cover data
-                    df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', manfield])
+                    df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', managementFieldName])
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
 
@@ -453,7 +461,7 @@ if __name__ == "__main__":
                     prevSol = -9999
                     deadEndFp = False
 
-                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', manfield, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, 'CropRotatn'], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, 'CropRotatn'], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
                         for urow in ucur:
                 ## only sample those with valid values (All NULLs become 0 in DBF land...)
                             if urow[2] is None:
@@ -550,12 +558,12 @@ if __name__ == "__main__":
     ##                    print('rows in goodSamples is ' + str(arcpy.GetCount_management(k10goodSamples)))
                         k10badsamples = arcpy.Select_analysis(xyAlbers, k10NullOutput, badSQL)
     ####                    nullOutput_defined = nullOutput.replace('null', 'nulldef')
-                        if k10counter == 1:
-                            arcpy.CopyFeatures_management(k10goodSamples, output_defined)
-                            arcpy.CopyFeatures_management(k10badsamples, nullOutput)
-                        else:
-                            arcpy.Append_management([k10goodSamples], output_defined)
-                            arcpy.Append_management([k10badsamples], nullOutput)
+                        # if k10counter == 1:
+                        #     arcpy.CopyFeatures_management(k10goodSamples, output_defined)
+                        #     arcpy.CopyFeatures_management(k10badsamples, nullOutput)
+                        # else:
+                        #     arcpy.Append_management([k10goodSamples], output_defined)
+                        #     arcpy.Append_management([k10badsamples], nullOutput)
     ##                    print('rows in output is ' + str(arcpy.GetCount_management(output_defined)))
 
                     if cleanup:
@@ -596,4 +604,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     finally:
-        log.warning("Finished")
+        log.info("Finished")
+        handlers = log.handlers
+        for h in handlers:
+            log.info('shutting it down!')
+            log.removeHandler(h)
+            h.close()
