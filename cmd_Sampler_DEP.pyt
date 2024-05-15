@@ -211,22 +211,22 @@ if __name__ == "__main__":
         arcpy.AddMessage("Whoo, hoo! Running from Python Window!")
         cleanup = False
 
-        parameters = ["C:/Python27/ArcGISx6410.3/pythonw.exe",
-        "C:/DEP/Scripts/basics/cmd_gen1Sampler_v8_irrigate.py",
-        "//EL3354-02/O$/DEP/LiDAR_Current/elev_PLib_mean18/07020001/ep3m070200010901.tif",
-        "//EL3354-02/O$/DEP/DEP_Flowpaths/HUC12_FlowPaths_mean18/07020001/fp070200010901.tif",
-        "//EL3354-02/O$/DEP/DEP_Flowpaths/HUC12_FPLengths_mean18/07020001/fpLen070200010901.tif",
-        "//EL3354-02/O$/DEP/DEP_Flowpaths/HUC12_GridOrder_mean18/07020001/gord_070200010901.tif",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/gSSURGO",
-        "//EL3354-02/O$/DEP/Man_Data_Other/lanid2011-2017/lanid2017.tif",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/FB070200010901",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/LU6_070200010901",
-        "Management_CY_2022",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_WEPP_SOL2023",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/smpl3m_mean18070200010901",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/null3m_mean18070200010901",
-        "//EL3354-02/D$/DEP/Man_Data_ACPF/dep_ACPF2022/07020001/idepACPF070200010901.gdb/null_flowpaths3m_mean18070200010901",
-        "D:/DEP_Proc/DEMProc/Sample_dem2013_3m_070200010901"]
+        parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
+	"C:/DEP/Scripts/basics/cmd_flowpath_DEP.pyt",
+	"M:/DEP/LiDAR_Current/elev_PLib_mean18/09030001/ep3m090300010905.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FlowPaths_mean18/09030001/fp090300010905.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FPLengths_mean18/09030001/fpLen090300010905.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_GridOrder_mean18/09030001/gord_090300010905.tif",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/gSSURGO",
+	"M:/DEP/Man_Data_Other/lanid2011-2017/lanid2017.tif",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/FB090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/LU6_090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_WEPP_SOL2023",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/smpl3m_mean18090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null3m_mean18090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null_flowpaths3m_mean18090300010905",
+	"D:/DEP_Proc/DEMProc/Sample_dem2013_3m_090300010905",
+	"M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]     
     
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -237,13 +237,13 @@ if __name__ == "__main__":
     messages = msgStub()
 
     pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, \
-        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir = [s for s in sys.argv[2:]]
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, canopyCoverMap = [s for s in sys.argv[1:]]
 
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
     arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
-              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup]
+              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, canopyCoverMap, cleanup]
 
     for a in arguments:
         if a == arguments[0]:
@@ -331,8 +331,8 @@ if __name__ == "__main__":
         solFyFieldName = 'SOL_FY_' + solYear
         ACPFyear = str(int(solYear)+1)
         fields = df.loadFieldNames(ACPFyear)
-        cropRotatnFieldName = fields['rotfield']#'CropRotatn_CY_' + str(int(ACPFyear))
-        managementFieldName = fields['manfield']#'Management_CY_' + str(int(ACPFyear))
+        cropRotatnFieldName = fields['rotField']#'CropRotatn_CY_' + str(int(ACPFyear))
+        managementFieldName = fields['manField']#'Management_CY_' + str(int(ACPFyear))
 
         log.info(f"cropRotatnFieldName is {cropRotatnFieldName}")
         log.info(f"managementFieldName is {managementFieldName}")
@@ -341,14 +341,14 @@ if __name__ == "__main__":
         arcpy.env.workspace = os.path.dirname(fieldBoundaries)#fileGDB
 
         ## convert field polygons to raster so we can use sample
-        if arcpy.Exists(fieldBoundaries) and arcpy.Exists(gordRaster):
-            log.info('valid boundaries and soils, processing')
+        if arcpy.Exists(ss) and arcpy.Exists(gordRaster):
+            log.info('valid grid order and soils, processing')
 
             gord = Raster(gordRaster)#os.path.join(gordDir, 'gord_' + huc12 + '.tif'))
 
             arcpy.env.snapRaster = gordRaster#fp#elev
             gordRastObj = arcpy.Raster(gordRaster)
-            named_cell_size = gordRastObj.meanCellHeigth
+            named_cell_size = gordRastObj.meanCellHeight
             arcpy.env.cellSize = named_cell_size#gordRaster#fp#elev
             sgdb = arcpy.env.scratchGDB
             sfldr = arcpy.env.scratchFolder
@@ -366,9 +366,13 @@ if __name__ == "__main__":
 
             # clip extent needs to be in USGS Albers
             # buffer boundary extent by 10000m to make sure we get a large enough irrigation raster (has caused excess NoData issues otherwise)
+            log.info('clipping and projecting irrigation')
             irrigation_clip = arcpy.Clip_management(irrigation_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'irrigation_clip'))
             irrigation_reproject = arcpy.ProjectRaster_management(irrigation_clip, os.path.join(sgdb, 'irrigated'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
+            log.info('clipping and projecting forest canopy')
+            canopy_cover_clip = arcpy.Clip_management(canopy_cover_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'canopy_clip'))
+            canopy_cover_reproject = arcpy.ProjectRaster_management(canopy_cover_clip, os.path.join(sgdb, 'canopy_cover'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
             # handle multiple flowpath rasters (due to defined flowpaths)
             for k10counter in range(0, 1):
@@ -448,6 +452,35 @@ if __name__ == "__main__":
                     df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', managementFieldName])
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
+
+                    # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
+                    with arcpy.da.UpdateCursor(sample, ['GenLU', manfield, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, manfield, 'CropRotatn', canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                        for urow in ucur:
+                            # set all rows with canopy cover > 0 equal to forest
+                            if urow[-1] > 0:
+                                urow[-2] = 'F' * 12
+                            # now set the management file to use
+                            if urow[-1] >= 90:
+                                urow[-3] = 'J' * 12
+                            elif urow[-1] >= 80:
+                                urow[-3] = 'I' * 12
+                            elif urow[-1] >= 70:
+                                urow[-3] = 'H' * 12
+                            elif urow[-1] >= 60:
+                                urow[-3] = 'G' * 12
+                            elif urow[-1] >= 50:
+                                urow[-3] = 'F' * 12
+                            elif urow[-1] >= 40:
+                                urow[-3] = 'E' * 12
+                            elif urow[-1] >= 30:
+                                urow[-3] = 'D' * 12
+                            elif urow[-1] >= 20:
+                                urow[-3] = 'C' * 12
+                            elif urow[-1] >= 10:
+                                urow[-3] = 'B' * 12
+                            elif urow[-1] >= 0:
+                                urow[-3] = 'A' * 12
+                            ucur.updateRow(urow)
 
                     # create a feature class from sample that preserves Nulls
                     gdbsample = arcpy.Select_analysis(sample, os.path.join(sgdb, 'init_sample'), 'CropRotatn IS NOT NULL')
