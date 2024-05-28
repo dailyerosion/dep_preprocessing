@@ -226,7 +226,8 @@ if __name__ == "__main__":
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null3m_mean18090300010905",
 	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null_flowpaths3m_mean18090300010905",
 	"D:/DEP_Proc/DEMProc/Sample_dem2013_3m_090300010905",
-	"M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]     
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/buf_090300010905",
+	"M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]
     
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -237,13 +238,13 @@ if __name__ == "__main__":
     messages = msgStub()
 
     pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, \
-        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, canopyCoverMap = [s for s in sys.argv[1:]]
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s for s in sys.argv[1:]]
 
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
     arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
-              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, canopyCoverMap, cleanup]
+              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map, cleanup]
 
     for a in arguments:
         if a == arguments[0]:
@@ -360,19 +361,26 @@ if __name__ == "__main__":
             ssRepro = arcpy.ProjectRaster_management(ss, os.path.join(sgdb, 'ssurgo'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
         ## Reproject irrigation map
-            desc_bnd = arcpy.Describe(fieldBoundaries)#wbd)
+            # if arcpy.Exists(buffered_huc):#fieldBoundaries):
+            #     proj_buf = arcpy.Project_management(buffered_huc, os.path.join(sgdb, 'buf_huc'), gord.spatialReference)
+            proj_buf_5070 = arcpy.Project_management(buffered_huc, os.path.join(sgdb, 'buf_huc_5070'), 5070)
+
+            desc_bnd = arcpy.Describe(proj_buf_5070)#buffered_huc)#fieldBoundaries)#wbd)
+            # desc_bnd = arcpy.Describe(fieldBoundaries)#wbd)
             extent = desc_bnd.extent
-            elev = Raster(pElevFile)
 
             # clip extent needs to be in USGS Albers
-            # buffer boundary extent by 10000m to make sure we get a large enough irrigation raster (has caused excess NoData issues otherwise)
+            # buffer boundary extent by 10000m to make sure we get a large enough irrigation and canopy raster (has caused excess NoData issues otherwise)
             log.info('clipping and projecting irrigation')
             irrigation_clip = arcpy.Clip_management(irrigation_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'irrigation_clip'))
             irrigation_reproject = arcpy.ProjectRaster_management(irrigation_clip, os.path.join(sgdb, 'irrigated'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
-            log.info('clipping and projecting forest canopy')
-            canopy_cover_clip = arcpy.Clip_management(canopy_cover_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'canopy_clip'))
-            canopy_cover_reproject = arcpy.ProjectRaster_management(canopy_cover_clip, os.path.join(sgdb, 'canopy_cover'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
+            if canopy_cover_map is not None:
+                log.info('clipping and projecting forest canopy')
+                canopy_cover_clip = arcpy.Clip_management(canopy_cover_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'canopy_clip'))
+                canopy_cover_reproject = arcpy.ProjectRaster_management(canopy_cover_clip, os.path.join(sgdb, 'canopy_cover'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
+
+            elev = Raster(pElevFile)
 
             # handle multiple flowpath rasters (due to defined flowpaths)
             for k10counter in range(0, 1):
@@ -398,7 +406,9 @@ if __name__ == "__main__":
                     arcpy.env.cellSize = fp#elev
                 ## create sample table
                     log.debug('sampling')
-                    sample_list = [elev, fpLenCm, ssRepro, gord, irrigation_reproject]
+                    sample_list = [elev, fpLenCm, str(ssRepro), gord, str(irrigation_reproject)]
+                    if canopy_cover_map is not None:
+                        sample_list.append(str(canopy_cover_reproject))
                     sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
@@ -425,15 +435,24 @@ if __name__ == "__main__":
 
                     srFp = arcpy.Describe(fp).spatialReference
                     xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
-                    xyOutput = os.path.join(inm, 'sample_pts_utm_' + huc12)
+
+                    sample_output_name = 'sample_pts_utm_' + huc12
+                    xyOutput = os.path.join(inm, sample_output_name)
                     xyUTM = arcpy.CopyFeatures_management(xyLyr, xyOutput)
-                    sampleRaw = arcpy.Intersect_analysis([xyUTM, fieldBoundaries], opj(sgdb, 'int_pts_' + huc12))
-                    arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
-                    arcpy.DeleteField_management(sampleRaw, 'Acres')
-                    arcpy.DeleteField_management(sampleRaw, 'isAG')
-                    arcpy.DeleteField_management(sampleRaw, 'updateYr')
-                    arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
-                    arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
+                    # send to gdb for later ordered update cursor
+                    xy_int_fields = opj(sgdb, 'int_pts_' + huc12)
+                    if arcpy.Exists(fieldBoundaries):
+                        sampleRaw = arcpy.Intersect_analysis([xyUTM, fieldBoundaries], xy_int_fields)
+                        arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
+                        arcpy.DeleteField_management(sampleRaw, 'Acres')
+                        arcpy.DeleteField_management(sampleRaw, 'isAG')
+                        arcpy.DeleteField_management(sampleRaw, 'updateYr')
+                        arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
+                        arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
+                    else:
+                        sampleRaw = arcpy.CopyFeatures_management(xyUTM, xy_int_fields) 
+                        arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
+                        arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
 
                     # test this code ot make it match fpXXXXXXXXXXXX for Daryl's schema
     ##                fpField = df.getfields(sampleRaw, 'fp' + huc12 + '*')[0]
@@ -444,50 +463,60 @@ if __name__ == "__main__":
                     arcpy.AlterField_management(sampleRaw, gord_field_name, 'gord_' + huc12)
                     arcpy.AlterField_management(sampleRaw, irrigated_field_name, 'irrigated')
 
+                    ## remove data about original UTM coordinates to avoid confusion
+                    arcpy.DeleteField_management(sampleRaw, 'X')
+                    arcpy.DeleteField_management(sampleRaw, 'Y')
+
                     # make sure no 0 values remain (shouldn't after re-write, but...)
                     sample = arcpy.Select_analysis(sampleRaw, os.path.join(sgdb, 'smpl_gord_' + huc12), fpField + ' > 0 AND ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' > 0')
 
-
                 ## bring in field land cover and management/residue cover data
-                    df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', managementFieldName])
+                    if arcpy.Exists(lu6):
+                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', managementFieldName])
+                    else:
+                        arcpy.AddField_management(sample, 'CropRotatn', 'TEXT')
+                        arcpy.AddField_management(sample, 'GenLU', 'TEXT')
+                        arcpy.AddField_management(sample, managementFieldName, 'TEXT')
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
 
-                    # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
-                    with arcpy.da.UpdateCursor(sample, ['GenLU', manfield, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, manfield, 'CropRotatn', canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
-                        for urow in ucur:
-                            # set all rows with canopy cover > 0 equal to forest
-                            if urow[-1] > 0:
-                                urow[-2] = 'F' * 12
-                            # now set the management file to use
-                            if urow[-1] >= 90:
-                                urow[-3] = 'J' * 12
-                            elif urow[-1] >= 80:
-                                urow[-3] = 'I' * 12
-                            elif urow[-1] >= 70:
-                                urow[-3] = 'H' * 12
-                            elif urow[-1] >= 60:
-                                urow[-3] = 'G' * 12
-                            elif urow[-1] >= 50:
-                                urow[-3] = 'F' * 12
-                            elif urow[-1] >= 40:
-                                urow[-3] = 'E' * 12
-                            elif urow[-1] >= 30:
-                                urow[-3] = 'D' * 12
-                            elif urow[-1] >= 20:
-                                urow[-3] = 'C' * 12
-                            elif urow[-1] >= 10:
-                                urow[-3] = 'B' * 12
-                            elif urow[-1] >= 0:
-                                urow[-3] = 'A' * 12
-                            ucur.updateRow(urow)
+                    if canopy_cover_map is not None:
+                        canopy_cover_field_name = df.getfields(sampleRaw1, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
+                        # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
+                        with arcpy.da.UpdateCursor(sample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, managementFieldName, 'CropRotatn', canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                            for urow in ucur:
+                                # set all rows with canopy cover > 0 equal to forest
+                                if urow[-1] > 0:
+                                    urow[-2] = 'F' * 12
+                                # now set the management file to use
+                                if urow[-1] >= 90:
+                                    urow[-3] = 'J' * 12
+                                elif urow[-1] >= 80:
+                                    urow[-3] = 'I' * 12
+                                elif urow[-1] >= 70:
+                                    urow[-3] = 'H' * 12
+                                elif urow[-1] >= 60:
+                                    urow[-3] = 'G' * 12
+                                elif urow[-1] >= 50:
+                                    urow[-3] = 'F' * 12
+                                elif urow[-1] >= 40:
+                                    urow[-3] = 'E' * 12
+                                elif urow[-1] >= 30:
+                                    urow[-3] = 'D' * 12
+                                elif urow[-1] >= 20:
+                                    urow[-3] = 'C' * 12
+                                elif urow[-1] >= 10:
+                                    urow[-3] = 'B' * 12
+                                elif urow[-1] >= 0:
+                                    urow[-3] = 'A' * 12
+                                ucur.updateRow(urow)
 
                     # create a feature class from sample that preserves Nulls
                     gdbsample = arcpy.Select_analysis(sample, os.path.join(sgdb, 'init_sample'), 'CropRotatn IS NOT NULL')
 
-                ## remove data about original UTM coordinates to avoid confusion
-                    arcpy.DeleteField_management(gdbsample, 'X')
-                    arcpy.DeleteField_management(gdbsample, 'Y')
+                # ## remove data about original UTM coordinates to avoid confusion
+                #     arcpy.DeleteField_management(gdbsample, 'X')
+                #     arcpy.DeleteField_management(gdbsample, 'Y')
 
                     # initialize tracking variables for soil files - all flowpaths end at a missing soil file
                     prevFp = -9999
@@ -559,7 +588,10 @@ if __name__ == "__main__":
 
                     # create queries to define good and bad samples 
                     goodSQL = 'SOL_Exists = 1 AND fpLen' + huc12 + ' IS NOT NULL'
-                    badSQL = fpField + ' = 0 OR ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' IS NULL OR SOL_Exists = 0 OR ' + cropRotatnFieldName + ' IS NULL OR fpLen' + huc12 + ' IS NULL'
+                    if canopy_cover_map is None:
+                        badSQL = fpField + ' = 0 OR ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' IS NULL OR SOL_Exists = 0 OR ' + cropRotatnFieldName + ' IS NULL OR fpLen' + huc12 + ' IS NULL'
+                    else:
+                        badSQL = fpField + ' = 0 OR ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' IS NULL OR SOL_Exists = 0 OR fpLen' + huc12 + ' IS NULL'
 
                     if not os.path.isdir(os.path.dirname(output)):
                         os.makedirs(os.path.dirname(output))
