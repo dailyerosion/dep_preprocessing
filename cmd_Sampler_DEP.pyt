@@ -34,6 +34,7 @@ sys.path.append("C:\\DEP\\Scripts\\basics")
 import dem_functions as df
 from os.path import join as opj
 
+import pathlib
 
 
 class msgStub:
@@ -212,21 +213,23 @@ if __name__ == "__main__":
         cleanup = False
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-	"C:/DEP/Scripts/basics/cmd_flowpath_DEP.pyt",
-	"M:/DEP/LiDAR_Current/elev_PLib_mean18/09030001/ep3m090300010905.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FlowPaths_mean18/09030001/fp090300010905.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FPLengths_mean18/09030001/fpLen090300010905.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_GridOrder_mean18/09030001/gord_090300010905.tif",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/gSSURGO",
+	"C:/DEP/Scripts/basics/cmd_Sampler_DEP.pyt",
+	"M:/DEP/LiDAR_Current/elev_PLib_mean18/09030001/ep3m090300010703.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FlowPaths_mean18/09030001/fp090300010703.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FPLengths_mean18/09030001/fpLen090300010703.tif",
+	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_GridOrder_mean18/09030001/gord_090300010703.tif",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/gSSURGO",
+	"M:/DEP/Man_Data_Other/wss_gsmsoil_US_[2016-10-13]/spatial/gsmsoilmu_a_us.shp",
 	"M:/DEP/Man_Data_Other/lanid2011-2017/lanid2017.tif",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/FB090300010905",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/LU6_090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/FB090300010703",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/FU090300010703",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/LU6_090300010703",
 	"D:/DEP/Man_Data_ACPF/dep_WEPP_SOL2023",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/smpl3m_mean18090300010905",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null3m_mean18090300010905",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/null_flowpaths3m_mean18090300010905",
-	"D:/DEP_Proc/DEMProc/Sample_dem2013_3m_090300010905",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010905.gdb/buf_090300010905",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/smpl3m_mean18090300010703",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/null3m_mean18090300010703",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/null_flowpaths3m_mean18090300010703",
+	"D:/DEP_Proc/DEMProc/Sample_dem2013_3m_090300010703",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/buf_090300010703",
 	"M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]
     
         for i in parameters[2:]:
@@ -237,13 +240,13 @@ if __name__ == "__main__":
 
     messages = msgStub()
 
-    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, \
+    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, fieldBoundaries, forest_units,\
         lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s for s in sys.argv[1:]]
 
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
-    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
+    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, fieldBoundaries, 
               lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map, cleanup]
 
     for a in arguments:
@@ -337,6 +340,10 @@ if __name__ == "__main__":
 
         log.info(f"cropRotatnFieldName is {cropRotatnFieldName}")
         log.info(f"managementFieldName is {managementFieldName}")
+
+        if arcpy.Exists(lu6) and cropRotatnFieldName not in df.getfields(lu6):
+            arcpy.AddField_management(lu6, cropRotatnFieldName, 'TEXT')
+            arcpy.CalculateField_management(lu6, cropRotatnFieldName, '!CropRotatn!', 'PYTHON3')
 
     ## use ACPF directory as workspace since 2 of the 5 rasters or feature classes we need are here already
         arcpy.env.workspace = os.path.dirname(fieldBoundaries)#fileGDB
@@ -440,19 +447,34 @@ if __name__ == "__main__":
                     xyOutput = os.path.join(inm, sample_output_name)
                     xyUTM = arcpy.CopyFeatures_management(xyLyr, xyOutput)
                     # send to gdb for later ordered update cursor
-                    xy_int_fields = opj(sgdb, 'int_pts_' + huc12)
+                    xy_int_bounds = opj(sgdb, 'int_pts_' + huc12)
+                    statsgoFieldName = 'STATSGO2_MUKEY'#addFieldStatsgo.getInput(1)
                     if arcpy.Exists(fieldBoundaries):
-                        sampleRaw = arcpy.Intersect_analysis([xyUTM, fieldBoundaries], xy_int_fields)
+                        sampleRaw = arcpy.Intersect_analysis([xyUTM, fieldBoundaries, statsgo2], xy_int_bounds)
+                        # remove extra field brought in by intersection
+                        fb_fields = df.getfields(fieldBoundaries)
+
                         arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
                         arcpy.DeleteField_management(sampleRaw, 'Acres')
                         arcpy.DeleteField_management(sampleRaw, 'isAG')
                         arcpy.DeleteField_management(sampleRaw, 'updateYr')
                         arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
                         arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
-                    else:
-                        sampleRaw = arcpy.CopyFeatures_management(xyUTM, xy_int_fields) 
+                    elif arcpy.Exists(forest_units):
+                        sampleRaw = arcpy.Intersect_analysis([xyUTM, forest_units, statsgo2], xy_int_bounds)
+                        # sampleRaw = arcpy.CopyFeatures_management(xyUTM, xy_int_bounds) 
                         arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
                         arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
+
+                    arcpy.AlterField_management(sampleRaw, 'MUKEY', statsgoFieldName)
+
+                    statsgo2_stem = pathlib.Path(statsgo2).stem
+                    statsgo_fields = df.getfields(statsgo2) + ['FID_' + statsgo2_stem]
+                    int_fields = df.getfields(sampleRaw)
+                    for s in statsgo_fields:
+                        if s in int_fields:
+                            if s not in ['SHAPE', 'Shape']:#statsgoFieldName]
+                                arcpy.DeleteField_management(sampleRaw, s)
 
                     # test this code ot make it match fpXXXXXXXXXXXX for Daryl's schema
     ##                fpField = df.getfields(sampleRaw, 'fp' + huc12 + '*')[0]
@@ -462,6 +484,9 @@ if __name__ == "__main__":
                     arcpy.AlterField_management(sampleRaw, elev_field_name, 'ep' + str(int(elev.meanCellHeight)) + 'm' + huc12)
                     arcpy.AlterField_management(sampleRaw, gord_field_name, 'gord_' + huc12)
                     arcpy.AlterField_management(sampleRaw, irrigated_field_name, 'irrigated')
+                    if canopy_cover_map is not None:
+                        cover_field_name = df.getfields(sampleRaw1, 'canopy_cover*')[0]
+                        arcpy.AlterField_management(sampleRaw, cover_field_name, 'canopy_cover')
 
                     ## remove data about original UTM coordinates to avoid confusion
                     arcpy.DeleteField_management(sampleRaw, 'X')
@@ -472,18 +497,22 @@ if __name__ == "__main__":
 
                 ## bring in field land cover and management/residue cover data
                     if arcpy.Exists(lu6):
-                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', ['CropRotatn', 'GenLU', managementFieldName])
+                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', [cropRotatnFieldName, 'GenLU', managementFieldName])
                     else:
-                        arcpy.AddField_management(sample, 'CropRotatn', 'TEXT')
+                        arcpy.AddField_management(sample, cropRotatnFieldName, 'TEXT')
                         arcpy.AddField_management(sample, 'GenLU', 'TEXT')
                         arcpy.AddField_management(sample, managementFieldName, 'TEXT')
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
+                    addFieldStatsgo = arcpy.AddField_management(sample, 'STATSGO_Exists', 'SHORT')
+    
+                    addFieldSoilgrids = arcpy.AddField_management(sample, 'SOILGRIDS_Exists', 'SHORT')
+                    soilgridsFieldName = addFieldSoilgrids.getInput(1)
 
                     if canopy_cover_map is not None:
-                        canopy_cover_field_name = df.getfields(sampleRaw1, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
+                        canopy_cover_field_name = df.getfields(sampleRaw, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
                         # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
-                        with arcpy.da.UpdateCursor(sample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, managementFieldName, 'CropRotatn', canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                        with arcpy.da.UpdateCursor(sample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, managementFieldName, cropRotatnFieldName, canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
                             for urow in ucur:
                                 # set all rows with canopy cover > 0 equal to forest
                                 if urow[-1] > 0:
@@ -512,7 +541,7 @@ if __name__ == "__main__":
                                 ucur.updateRow(urow)
 
                     # create a feature class from sample that preserves Nulls
-                    gdbsample = arcpy.Select_analysis(sample, os.path.join(sgdb, 'init_sample'), 'CropRotatn IS NOT NULL')
+                    gdbsample = arcpy.Select_analysis(sample, os.path.join(sgdb, 'init_sample'), cropRotatnFieldName + ' IS NOT NULL')
 
                 # ## remove data about original UTM coordinates to avoid confusion
                 #     arcpy.DeleteField_management(gdbsample, 'X')
@@ -523,29 +552,50 @@ if __name__ == "__main__":
                     prevSol = -9999
                     deadEndFp = False
 
-                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, 'CropRotatn'], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, statsgoFieldName, soilgridsFieldName], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
                         for urow in ucur:
                 ## only sample those with valid values (All NULLs become 0 in DBF land...)
                             if urow[2] is None:
                                 solExists = False
+                                ssurgoExists = False
+                                statsgoExists = False
+                                soilgridsExists = False
                                 deadEndFp = True
                             else:
                                 # make sure soils file exists at start of any flowpath
-                                solFile = os.path.join(soilsDir, 'DEP_' + str(int(urow[2])) + '.sol')
+                                ssurgoFile = os.path.join(soilsDir, 'DEP_' + str(int(urow[2])) + '.sol')
+                                statsgoFile = os.path.join(soilsDir, 'STATSGO_' + str(int(urow[5])) + '.sol')
+                                # soilgridsFile = os.path.join(soilsDir, 'SOILGRIDS_' + str(int(urow[2])) + '.sol')
                                 # handle areas outside gSSURGO bounds (currently portions of HUC12s in states outside ACPF core)
+                                if os.path.isfile(ssurgoFile):
+                                    ssurgoExists = True
+                                else:
+                                    ssurgoExists = False
+                                if os.path.isfile(statsgoFile):
+                                    statsgoExists = True
+                                else:
+                                    statsgoExists = False
+                                    # if os.path.isfile(soilgridsFile):
+                                    #     soilgridsExists = True
                                 if prevFp == -9999 or urow[4] != prevFp:
-                                    if os.path.isfile(solFile):
-                                        solExists = True
+                                    if ssurgoExists:
                                         deadEndFp = False
+                                    if statsgoExists:
+                                        deadEndFp = False
+                                    # if soilgridsExists:
+                                        # deadEndFp = False
+                                    if ssurgoExists | statsgoExists: #| soilgridsExists:
+                                        solExists = True
                                     else:
                                         solExists = False
                                         deadEndFp = True
 
-                                # make sure soils file exists at any change of soil map unit
                                 # make sure not at start of any flowpath
                                 if prevFp != -9999 and urow[4] == prevFp:
+                                    # make sure soils file exists at any change of soil map unit
                                     if urow[2] != prevSol:
-                                        if os.path.isfile(solFile) and not deadEndFp:
+                                        if ssurgoExists | statsgoExists and not deadEndFp:
+                                        # if os.path.isfile(solFile) and not deadEndFp:
                                             solExists = True
                                         else:
                                             solExists = False
@@ -559,12 +609,15 @@ if __name__ == "__main__":
                                     urow[3] = 1
                                 else:
                                     urow[3] = 0
+
+##                                urow[5] = statsgoExists
+##                                urow[6] = soilgridsExists
                             
                             ucur.updateRow(urow)
 
                     # update field names from joined ACPF tables to be more specific for year
                     arcpy.AlterField_management(gdbsample, ssurgo_field_name, solFyFieldName)
-                    arcpy.AlterField_management(gdbsample, 'CropRotatn', cropRotatnFieldName)
+                    # arcpy.AlterField_management(gdbsample, 'CropRotatn', cropRotatnFieldName)
 
                     # add a unique identifier field
                     fp_basename = os.path.basename(fpRasterInit)
