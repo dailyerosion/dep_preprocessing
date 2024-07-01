@@ -31,6 +31,7 @@ import platform
 #from arcpy import env
 from arcpy.sa import *
 sys.path.append("C:\\DEP\\Scripts\\basics")
+sys.path.append("C:\\GitHub\\hydro_dems")
 import dem_functions as df
 from os.path import join as opj
 
@@ -505,9 +506,10 @@ if __name__ == "__main__":
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
                     addFieldStatsgo = arcpy.AddField_management(sample, 'STATSGO_Exists', 'SHORT')
+                    statsgoExistsField = addFieldStatsgo.getInput(1)
     
-                    addFieldSoilgrids = arcpy.AddField_management(sample, 'SOILGRIDS_Exists', 'SHORT')
-                    soilgridsFieldName = addFieldSoilgrids.getInput(1)
+                    # addFieldSoilgrids = arcpy.AddField_management(sample, 'SOILGRIDS_Exists', 'SHORT')
+                    # soilgridsFieldName = addFieldSoilgrids.getInput(1)
 
                     if canopy_cover_map is not None:
                         canopy_cover_field_name = df.getfields(sampleRaw, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
@@ -551,8 +553,8 @@ if __name__ == "__main__":
                     prevFp = -9999
                     prevSol = -9999
                     deadEndFp = False
-
-                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, statsgoFieldName, soilgridsFieldName], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+# , soilgridsFieldName, soilgridsExistsField
+                    with arcpy.da.UpdateCursor(gdbsample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, statsgoFieldName, statsgoExistsField], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
                         for urow in ucur:
                 ## only sample those with valid values (All NULLs become 0 in DBF land...)
                             if urow[2] is None:
@@ -565,7 +567,7 @@ if __name__ == "__main__":
                                 # make sure soils file exists at start of any flowpath
                                 ssurgoFile = os.path.join(soilsDir, 'DEP_' + str(int(urow[2])) + '.sol')
                                 statsgoFile = os.path.join(soilsDir, 'STATSGO_' + str(int(urow[5])) + '.sol')
-                                # soilgridsFile = os.path.join(soilsDir, 'SOILGRIDS_' + str(int(urow[2])) + '.sol')
+                                # soilgridsFile = os.path.join(soilsDir, 'SOILGRIDS_' + str(int(urow[7])) + '.sol')
                                 # handle areas outside gSSURGO bounds (currently portions of HUC12s in states outside ACPF core)
                                 if os.path.isfile(ssurgoFile):
                                     ssurgoExists = True
@@ -605,13 +607,13 @@ if __name__ == "__main__":
                                 prevFp = urow[4]
                                 prevSol = urow[2]
 
-                                if solExists:
-                                    urow[3] = 1
-                                else:
-                                    urow[3] = 0
+                            if solExists:
+                                urow[3] = 1
+                            else:
+                                urow[3] = 0
 
-##                                urow[5] = statsgoExists
-##                                urow[6] = soilgridsExists
+                            urow[6] = statsgoExists
+##                            urow[8] = soilgridsExists
                             
                             ucur.updateRow(urow)
 
