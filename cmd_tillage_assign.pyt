@@ -275,9 +275,11 @@ def doTillageAssign(fb, lu6, rc_table, man_field, till_field, rc_field, bulkDir,
         os.makedirs(bulkDir)
 
     ## fill all crop management fields by setting breaks between tillage classes)
-    ## these values from David Mulla's calculations
-    bcover = [0.25, 0.15, 0.10, 0.05, 0.02]#soybeans
-    ccover = [0.70, 0.45, 0.30, 0.15, 0.05]#corn
+    # bcover = [0.25, 0.15, 0.10, 0.05, 0.02]#soybeans, ## these values from David Mulla's calculations
+    bcover = [0.54, 0.18, 0.06, 0.03, 0.02]# from Eduardo Luquin re-analysis of Bean/Corn rotation in WEPP 2022
+    # ccover = [0.70, 0.45, 0.30, 0.15, 0.05]#corn, ## these values from David Mulla's calculations
+    ccover = [0.82, 0.57, 0.33, 0.17, 0.08]# from Eduardo Luquin re-analysis of Bean/Corn rotation in WEPP 2022
+    cccover = [0.73, 0.27, 0.19, 0.11, 0.07]
     ## these values from DEP 2018 paper
     gcover = [0.65, 0.40, 0.12, 0.06, 0.03]#sorghum
     wcover = [0.50, 0.40, 0.20, 0.15, 0.06]#wheat
