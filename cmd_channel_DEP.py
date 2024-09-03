@@ -443,7 +443,7 @@ if __name__ == "__main__":
         inDEM, ProcDir, statGDB, ws_bnd, pdCatch, pdChnl, wShed  = [i for i in sys.argv[1:]]
         # fileGDB = os.path.dirname(pdCatch)#sys.argv[3]
 
-        huc12, huc8, proc_size = df.figureItOut(inDEM)
+        huc12, huc8 = df.figureItOut(inDEM)
 
         if cleanup:
             # log to file only
