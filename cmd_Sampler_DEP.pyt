@@ -26,9 +26,7 @@ import arcpy
 import sys
 import os
 import traceback
-#import datetime
 import platform
-#from arcpy import env
 from arcpy.sa import *
 sys.path.append("C:\\DEP\\Scripts\\basics")
 sys.path.append("C:\\GitHub\\hydro_dems")
@@ -201,7 +199,7 @@ class msgStub:
 #         added to the display."""
 #         return
 
-# def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, fieldBoundaries, 
+# def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, field_or_forest, 
 #               lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup, messages):
 
 
@@ -214,24 +212,23 @@ if __name__ == "__main__":
         cleanup = False
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-	"C:/DEP/Scripts/basics/cmd_Sampler_DEP.pyt",
-	"M:/DEP/LiDAR_Current/elev_PLib_mean18/09030001/ep3m090300010703.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FlowPaths_mean18/09030001/fp090300010703.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_FPLengths_mean18/09030001/fpLen090300010703.tif",
-	"M:/DEP_tim_random_flowpath_update_testing/DEP_Flowpaths/HUC12_GridOrder_mean18/09030001/gord_090300010703.tif",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/gSSURGO",
-	"M:/DEP/Man_Data_Other/wss_gsmsoil_US_[2016-10-13]/spatial/gsmsoilmu_a_us.shp",
-	"M:/DEP/Man_Data_Other/lanid2011-2017/lanid2017.tif",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/FB090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/FU090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/LU6_090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_WEPP_SOL2023",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/smpl3m_mean18090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/null3m_mean18090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/null_flowpaths3m_mean18090300010703",
-	"D:/DEP_Proc/DEMProc/Sample_dem2013_3m_090300010703",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030001/idepACPF090300010703.gdb/buf_090300010703",
-	"M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]
+    "C:/GitHub/dep_preprocessing/cmd_Sampler_DEP.pyt",
+    "M:/DEP/LiDAR_Current/elev_PLib_mean18/07080105/ep3m070801050303.tif",
+    "H:/tsklenar/ISA_project/isa_all_good_flowpaths_by_huc/070801050303_isa_paths_composite.tif/unique_id",
+    "H:/tsklenar/ISA_project/isa_all_good_flowpaths_by_huc/070801050303_isa_paths_composite.tif/flow_length",
+    "M:/DEP/DEP_Flowpaths/HUC12_GridOrder_mean18/07080105/gord_070801050303.tif",
+    "D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/gSSURGO",
+    "M:/DEP/Man_Data_Other/wss_gsmsoil_US/spatial/gsmsoilmu_a_us.shp",
+    "M:/DEP/Man_Data_Other/lanid2011-2017/lanid2017.tif",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/FB070801050303",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/LU6_070801050303",
+    "D:/DEP/Man_Data_ACPF/dep_WEPP_SOL2023",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/smpl3m_mean18070801050303",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/null3m_mean18070801050303",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/null_flowpaths3m_mean18070801050303",
+    "E:/DEP_Proc_bkg_isa_samples/DEMProc/Sample_dem2013_3m_070801050303",
+    "D:/DEP_bkg_isa_samples/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050303.gdb/buf_070801050303",
+    "M:/DEP/Man_Data_Other/Forest_Cover/LF2022_CC_220_CONUS/Tif/LC22_CC_220.tif"]
     
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -241,14 +238,16 @@ if __name__ == "__main__":
 
     messages = msgStub()
 
-    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, fieldBoundaries, forest_units,\
-        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s for s in sys.argv[1:]]
+    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_or_forest,\
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s if s != "" else None for s in sys.argv[1:]]
+
+    canopy_cover_map = None
 
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
-    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, fieldBoundaries, 
-              lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map, cleanup]
+    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_or_forest,\
+        lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map, cleanup]
 
     for a in arguments:
         if a == arguments[0]:
@@ -268,6 +267,27 @@ if __name__ == "__main__":
     try:
         huc12, huc8 = df.figureItOut(pElevFile)
 
+        if procDir is not None:
+            if not os.path.isdir(procDir):
+                os.makedirs(procDir)
+
+            arcpy.env.scratchWorkspace = procDir
+            sfldr = arcpy.env.scratchFolder
+        else:
+            sfldr = arcpy.env.scratchFolder
+            procDir = sfldr
+
+        sfldr = arcpy.env.scratchFolder
+        sgdb = arcpy.env.scratchGDB
+        arcpy.env.scratchWorkspace = sgdb
+        arcpy.env.workspace = sgdb
+
+        #figure out where to create log files
+        node = platform.node()
+        logProc = df.defineLocalProc(node)
+        if not os.path.isdir(logProc):
+            logProc = sfldr
+
         if cleanup:
             # log to file only
             log, nowYmd, logName, startTime = df.setupLoggingNoCh(platform.node(), sys.argv[0], huc12)
@@ -286,55 +306,16 @@ if __name__ == "__main__":
         log.info("Processing HUC: " + huc12)
         messages.addMessage("Log file at " + logName)
 
-        if procDir != "":
-            if os.path.isdir(procDir):
-                log.info('nuking: ' + procDir)
-                df.nukedir(procDir)
-
-            if not os.path.isdir(procDir):
-                os.makedirs(procDir)
-
-            arcpy.env.scratchWorkspace = procDir
-
-        sfldr = arcpy.env.scratchFolder
-        sgdb = arcpy.env.scratchGDB
-        arcpy.env.scratchWorkspace = sgdb
-        arcpy.env.workspace = sgdb
-
         inm = 'in_memory'
 
-# #-------------------------------------------------------------------------------
-# pElevFile = sys.argv[1]#paths['pElevFile']
-# ## flowpath directory
-# fpRasterInit = sys.argv[2]#paths["FPath_Mosaic_out"]#sys.argv[4]
-# ## flowpath length directory
-# fplRasterInit = sys.argv[3]#paths["FPLen_Mosaic_out"]#sys.argv[5]
-# ## grid order directory
-# gordRaster = sys.argv[4]#paths["GordRaster"]#sys.argv[6]
-# # SSURGO map
-# ss = sys.argv[5]#paths['SSURGO']#os.path.join(fileGDB, 'gSSURGO')
-# # Irrigation map for determining irrigation status
-# irrigation_map = sys.argv[6]#paths["irrigationMap"]
-
-# fieldBoundaries = sys.argv[7]#paths['fieldBoundaries']
-
-# lu6 = sys.argv[8]#paths["LU6"]
-# manfield = sys.argv[9]#paths["manField"]
-
-# # DEP soils directory (for SOL file check)
-# soilsDir = sys.argv[10]#paths["soilsDir"]#sys.argv[8]
-
-# ## for DBF output
-# output = sys.argv[11]#paths["samples"]#Output"]#sys.argv[9]
-# nullOutput = sys.argv[12]#paths["nulls"]#Output"]#sys.argv[10]
-# null_flowpaths = sys.argv[13] + '_copy'#paths['null_flowpaths']
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
         ## SSURGO fiscal year
         solYear = os.path.basename(soilsDir)[-4:]
 
         solFyFieldName = 'SOL_FY_' + solYear
-        ACPFyear = str(int(solYear)+1)
+        ACPFyear = str(int(solYear)-1)
         fields = df.loadFieldNames(ACPFyear)
         cropRotatnFieldName = fields['rotField']#'CropRotatn_CY_' + str(int(ACPFyear))
         managementFieldName = fields['manField']#'Management_CY_' + str(int(ACPFyear))
@@ -347,7 +328,7 @@ if __name__ == "__main__":
             arcpy.CalculateField_management(lu6, cropRotatnFieldName, '!CropRotatn!', 'PYTHON3')
 
     ## use ACPF directory as workspace since 2 of the 5 rasters or feature classes we need are here already
-        arcpy.env.workspace = os.path.dirname(fieldBoundaries)#fileGDB
+        arcpy.env.workspace = os.path.dirname(field_or_forest)#fileGDB
 
         ## convert field polygons to raster so we can use sample
         if arcpy.Exists(ss) and arcpy.Exists(gordRaster):
@@ -362,23 +343,16 @@ if __name__ == "__main__":
             sgdb = arcpy.env.scratchGDB
             sfldr = arcpy.env.scratchFolder
 
-        # ## convert field polygons from ACPF to raster so we can use sample
-        #     repro = arcpy.Project_management(fieldBoundaries, os.path.join(sgdb, 'fbnds'), gord.spatialReference)
-
         ## relative file for ACPF soil data
             ssRepro = arcpy.ProjectRaster_management(ss, os.path.join(sgdb, 'ssurgo'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
-        ## Reproject irrigation map
-            # if arcpy.Exists(buffered_huc):#fieldBoundaries):
-            #     proj_buf = arcpy.Project_management(buffered_huc, os.path.join(sgdb, 'buf_huc'), gord.spatialReference)
-            proj_buf_5070 = arcpy.Project_management(buffered_huc, os.path.join(sgdb, 'buf_huc_5070'), 5070)
-
-            desc_bnd = arcpy.Describe(proj_buf_5070)#buffered_huc)#fieldBoundaries)#wbd)
-            # desc_bnd = arcpy.Describe(fieldBoundaries)#wbd)
-            extent = desc_bnd.extent
-
+        ## Reproject buffered huc
             # clip extent needs to be in USGS Albers
             # buffer boundary extent by 10000m to make sure we get a large enough irrigation and canopy raster (has caused excess NoData issues otherwise)
+            proj_buf_5070 = arcpy.Project_management(buffered_huc, os.path.join(sgdb, 'buf_huc_5070'), 5070)
+            desc_bnd = arcpy.Describe(proj_buf_5070)
+            extent = desc_bnd.extent
+
             log.info('clipping and projecting irrigation')
             irrigation_clip = arcpy.Clip_management(irrigation_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'irrigation_clip'))
             irrigation_reproject = arcpy.ProjectRaster_management(irrigation_clip, os.path.join(sgdb, 'irrigated'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
@@ -388,7 +362,15 @@ if __name__ == "__main__":
                 canopy_cover_clip = arcpy.Clip_management(canopy_cover_map, str(extent.XMin-10000) + ' ' + str(extent.YMin-10000) + ' ' + str(extent.XMax+10000) + ' ' + str(extent.YMax+10000), opj(sgdb, 'canopy_clip'))
                 canopy_cover_reproject = arcpy.ProjectRaster_management(canopy_cover_clip, os.path.join(sgdb, 'canopy_cover'), gord.spatialReference, 'NEAREST', cell_size = gord.meanCellHeight)
 
-            elev = Raster(pElevFile)
+            log.info('clipping and projecting statsgo2')
+            statsgo2_clip = arcpy.Clip_analysis(statsgo2, proj_buf_5070, opj(inm, 'statsgo2_clip'))
+            # statsgo2_reproject = arcpy.Project_management(statsgo2_clip, os.path.join(sgdb, 'statsgo2_5070'), gord.spatialReference)#, 'NEAREST', cell_size = gord.meanCellHeight)
+
+            log.info('creating raster object for pElevFile')
+            # pElevFile = pElevFile.replace('M:', 'N:')
+            # pElevFile_local = arcpy.CopyFeatures_management(pElevFile, opj(procDir, os.path.basename(pElevFile)))
+            elev = Raster(pElevFile)#_local)
+            log.info('done creating raster object for pElevFile')
 
             # handle multiple flowpath rasters (due to defined flowpaths)
             for k10counter in range(0, 1):
@@ -417,11 +399,19 @@ if __name__ == "__main__":
                     sample_list = [elev, fpLenCm, str(ssRepro), gord, str(irrigation_reproject)]
                     if canopy_cover_map is not None:
                         sample_list.append(str(canopy_cover_reproject))
+                    log.info('sampling first time')
                     sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
                     ssurgo_field_name = df.getfields(sampleRaw1, 'ssurgo*')[0]
-                    fp_len_field_name = df.getfields(sampleRaw1, fpLenCm.name[:5] + '*')[0]
+                    pl_raster = pathlib.Path(fplRaster)
+                    # for multi-band flowpath and flowpath length raster
+                    if pl_raster.parent.name.endswith('.tif'):
+                        fp_len_test = "_".join([os.path.splitext(pl_raster.parent.name)[0], pl_raster.name])
+                        fp_len_field_name = df.getfields(sampleRaw1, "*" + fp_len_test + '*')[0]
+                        # arcpy.AlterField_management(sampleRaw1, fp_len_field_name, 'fpLen' + huc12 + '_Band_1')
+                    else:
+                        fp_len_field_name = df.getfields(sampleRaw1, fpLenCm.name[:5] + '*')[0]
                     gord_field_name = df.getfields(sampleRaw1, gord.name[:5] + '*')[0]
                     elev_field_name = df.getfields(sampleRaw1, elev.name[:5] + '*')[0]
                     irrigated_field_name = df.getfields(sampleRaw1, 'irrigated*')[0]
@@ -450,31 +440,28 @@ if __name__ == "__main__":
                     # send to gdb for later ordered update cursor
                     xy_int_bounds = opj(sgdb, 'int_pts_' + huc12)
                     statsgoFieldName = 'STATSGO2_MUKEY'#addFieldStatsgo.getInput(1)
-                    if arcpy.Exists(fieldBoundaries):
-                        sampleRaw = arcpy.Intersect_analysis([xyUTM, fieldBoundaries, statsgo2], xy_int_bounds)
+                    log.info('sampling second time')
+                    sampleRaw = arcpy.Intersect_analysis([xyUTM, field_or_forest, statsgo2_clip], xy_int_bounds)
+                    if 'FB' in field_or_forest:
                         # remove extra field brought in by intersection
-                        fb_fields = df.getfields(fieldBoundaries)
-
                         arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
                         arcpy.DeleteField_management(sampleRaw, 'Acres')
                         arcpy.DeleteField_management(sampleRaw, 'isAG')
                         arcpy.DeleteField_management(sampleRaw, 'updateYr')
                         arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
                         arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
-                    elif arcpy.Exists(forest_units):
-                        sampleRaw = arcpy.Intersect_analysis([xyUTM, forest_units, statsgo2], xy_int_bounds)
-                        # sampleRaw = arcpy.CopyFeatures_management(xyUTM, xy_int_bounds) 
+                    else:#elif arcpy.Exists(forest_units):
                         arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
                         arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
 
                     arcpy.AlterField_management(sampleRaw, 'MUKEY', statsgoFieldName)
 
                     statsgo2_stem = pathlib.Path(statsgo2).stem
-                    statsgo_fields = df.getfields(statsgo2) + ['FID_' + statsgo2_stem]
+                    statsgo_fields = df.getfields(statsgo2) + ['FID_' + statsgo2_stem] + ['FID_' + os.path.basename(str(statsgo2_clip))]
                     int_fields = df.getfields(sampleRaw)
                     for s in statsgo_fields:
                         if s in int_fields:
-                            if s not in ['SHAPE', 'Shape']:#statsgoFieldName]
+                            if s not in ['SHAPE', 'Shape', statsgoFieldName]:
                                 arcpy.DeleteField_management(sampleRaw, s)
 
                     # test this code ot make it match fpXXXXXXXXXXXX for Daryl's schema
