@@ -241,8 +241,6 @@ if __name__ == "__main__":
     pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_or_forest,\
         lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s if s != "" else None for s in sys.argv[1:]]
 
-    canopy_cover_map = None
-
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
