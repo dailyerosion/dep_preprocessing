@@ -492,6 +492,7 @@ if __name__ == "__main__":
                     else:
                         for r in remaining_fields_to_join:
                             arcpy.AddField_management(sample, r, 'TEXT')
+                    log.debug(f"remaining_fields_to_join: {remaining_fields_to_join}")
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
                     addFieldStatsgo = arcpy.AddField_management(sample, 'STATSGO_Exists', 'SHORT')
