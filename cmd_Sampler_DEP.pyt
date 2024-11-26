@@ -489,10 +489,9 @@ if __name__ == "__main__":
                         lu6_fields = set([f for f in arcpy.ListFields(lu6) if f in fields_to_join])
                         df.joinDict(sample, 'FBndID', lu6, 'FBndID', list(lu6_fields))
                         remaining_fields_to_join = fields_to_join - lu6_fields 
-                    else:
-                        for r in remaining_fields_to_join:
-                            arcpy.AddField_management(sample, r, 'TEXT')
                     log.debug(f"remaining_fields_to_join: {remaining_fields_to_join}")
+                    for r in remaining_fields_to_join:
+                        arcpy.AddField_management(sample, r, 'TEXT')
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
                     addFieldStatsgo = arcpy.AddField_management(sample, 'STATSGO_Exists', 'SHORT')
