@@ -482,12 +482,16 @@ if __name__ == "__main__":
                     sample = arcpy.Select_analysis(sampleRaw, os.path.join(sgdb, 'smpl_gord_' + huc12), fpField + ' > 0 AND ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' > 0')
 
                 ## bring in field land cover and management/residue cover data
+                    fields_to_join = set([cropRotatnFieldName, 'GenLU', managementFieldName])
+                    log.debug(f"fields_to_join: {fields_to_join}")
+                    remaining_fields_to_join = fields_to_join
                     if arcpy.Exists(lu6):
-                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', [cropRotatnFieldName, 'GenLU', managementFieldName])
+                        lu6_fields = set([f for f in arcpy.ListFields(lu6) if f in fields_to_join])
+                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', lu6_fields)
+                        remaining_fields_to_join = fields_to_join - lu6_fields 
                     else:
-                        arcpy.AddField_management(sample, cropRotatnFieldName, 'TEXT')
-                        arcpy.AddField_management(sample, 'GenLU', 'TEXT')
-                        arcpy.AddField_management(sample, managementFieldName, 'TEXT')
+                        for r in remaining_fields_to_join:
+                            arcpy.AddField_management(sample, r, 'TEXT')
 
                     arcpy.AddField_management(sample, 'SOL_Exists', 'SHORT')
                     addFieldStatsgo = arcpy.AddField_management(sample, 'STATSGO_Exists', 'SHORT')
