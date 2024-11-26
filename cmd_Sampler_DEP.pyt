@@ -487,7 +487,7 @@ if __name__ == "__main__":
                     remaining_fields_to_join = fields_to_join
                     if arcpy.Exists(lu6):
                         lu6_fields = set([f for f in arcpy.ListFields(lu6) if f in fields_to_join])
-                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', lu6_fields)
+                        df.joinDict(sample, 'FBndID', lu6, 'FBndID', list(lu6_fields))
                         remaining_fields_to_join = fields_to_join - lu6_fields 
                     else:
                         for r in remaining_fields_to_join:
