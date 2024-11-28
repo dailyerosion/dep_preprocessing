@@ -656,10 +656,10 @@ if __name__ == "__main__":
 
                         for f in fields:
                             if f not in ref_fields:
-                                log.warning('missing field: {f}')
+                                log.warning(f'missing field: {f}')
                         for f in ref_fields:
                             if f not in fields:
-                                log.warning('extra field: {f}')
+                                log.warning(f'extra field: {f}')
 
                         goodsamples = arcpy.Select_analysis(xyAlbers, output, where_clause = goodSQL)
     ##                    print('rows in output is ' + str(arcpy.GetCount_management(goodsamples)))#output)))
