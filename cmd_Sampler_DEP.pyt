@@ -451,8 +451,8 @@ if __name__ == "__main__":
                         # arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
                         arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
                         # fields from forest units
-                        arcpy.DeleteField_management(sampleRaw, 'gridcode', 'TEXT')
-                        arcpy.DeleteField_management(sampleRaw, 'Id', 'TEXT')
+                        arcpy.DeleteField_management(sampleRaw, 'gridcode')
+                        arcpy.DeleteField_management(sampleRaw, 'Id')
 
                     arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
 
