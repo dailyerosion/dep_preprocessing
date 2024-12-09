@@ -447,10 +447,14 @@ if __name__ == "__main__":
                         arcpy.DeleteField_management(sampleRaw, 'isAG')
                         arcpy.DeleteField_management(sampleRaw, 'updateYr')
                         arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
-                        arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
                     else:#elif arcpy.Exists(forest_units):
-                        arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
+                        # arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
                         arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
+                        # fields from forest units
+                        arcpy.DeleteField_management(sampleRaw, 'gridcode')
+                        arcpy.DeleteField_management(sampleRaw, 'Id')
+
+                    arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
 
                     arcpy.AlterField_management(sampleRaw, 'MUKEY', statsgoFieldName)
 
@@ -643,6 +647,19 @@ if __name__ == "__main__":
                     
                         albersOutput = os.path.join(sgdb, 'sample_pts_5070_' + huc12)
                         xyAlbers = arcpy.Project_management(gdbsample, albersOutput, 5070)
+
+                        ref_samples_name1 = output.replace(huc12, '070801050902')
+                        ref_samples = ref_samples_name1.replace(huc8, '07080105')
+                        ref_fields = df.getfields(ref_samples)
+                        ref_fields = [r.replace('070801050902', huc12) for r in ref_fields]
+                        'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050902.gdb\\smpl3m_mean18070801050902'
+
+                        for f in fields:
+                            if f not in ref_fields:
+                                log.warning(f'missing field: {f}')
+                        for f in ref_fields:
+                            if f not in fields:
+                                log.warning(f'extra field: {f}')
 
                         goodsamples = arcpy.Select_analysis(xyAlbers, output, where_clause = goodSQL)
     ##                    print('rows in output is ' + str(arcpy.GetCount_management(goodsamples)))#output)))
