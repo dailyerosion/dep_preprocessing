@@ -478,8 +478,13 @@ if __name__ == "__main__":
                 rc_table = rc_table.replace('mn_rc', 'gee_rc')
         year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
         options = ['uniform', 'linear', 'none']
-        for option in options:
-            rc_field = rc_field_base[:7] + option.capitalize() + rc_field_base[6:-4] + ACPFyear
-            tillage_table = year_tillage_table.replace('_till', '_till' + option.capitalize())
-            doTillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages)
+        # for option in options:
+        #     rc_field = rc_field_base[:7] + option.capitalize() + rc_field_base[6:-4] + ACPFyear
+        #     tillage_table = year_tillage_table.replace('_till', '_till' + option.capitalize())
+        #     doTillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages)
+        option = options[2]
+        # rc_field = rc_field_base + option.capitalize() + rc_field_base[6:-4] + ACPFyear
+        rc_field = rc_field_base[6:-4] + ACPFyear
+        tillage_table = year_tillage_table
+        doTillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages)
     arcpy.AddMessage("Back from doTillageAssign!")
