@@ -476,6 +476,9 @@ if __name__ == "__main__":
         if 'mn_rc' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('mn_rc', 'gee_rc')
+        elif 'rc_mn' in rc_table:
+            if not arcpy.Exists(rc_table):
+                rc_table = rc_table.replace('rc_mn', 'rc_gee')
         year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
         options = ['uniform', 'linear', 'none']
         # for option in options:

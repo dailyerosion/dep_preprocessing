@@ -714,7 +714,16 @@ if __name__ == "__main__":
                     else:
                         pass
 
-    except AssertionError:
+    except AssertionError as e:
+##        log.debug(e.message)
+        if sys.version_info.major == 2:
+            arcpy.AddError(e.message)
+            print(e.message)
+            log.warning(e.message)
+        elif sys.version_info.major == 3:
+            arcpy.AddError(e)
+            print(e)
+            log.warning(e)
         log.warning('assertion failure on: ' + huc12)
         sys.exit(1)
 
