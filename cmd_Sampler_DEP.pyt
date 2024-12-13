@@ -648,7 +648,7 @@ if __name__ == "__main__":
                         albersOutput = os.path.join(sgdb, 'sample_pts_5070_' + huc12)
                         xyAlbers = arcpy.Project_management(gdbsample, albersOutput, 5070)
 
-                        ref_paths = df.loadVariablesDict(platform.node(), ACPFyear, '070801050902', '26915', 'mean18', named_cell_size, nowYmd, '')
+                        ref_paths = df.loadVariablesDict(platform.node(), ACPFyear, '070801050902', '26915', 'mean18', int(named_cell_size), nowYmd, '')
                         ref_samples = ref_paths['samples']
                         # ref_samples_name1 = output.replace(huc12, '070801050902')
                         # ref_samples = ref_samples_name1.replace(huc8, '07080105')
