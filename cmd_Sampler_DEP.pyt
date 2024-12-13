@@ -648,11 +648,19 @@ if __name__ == "__main__":
                         albersOutput = os.path.join(sgdb, 'sample_pts_5070_' + huc12)
                         xyAlbers = arcpy.Project_management(gdbsample, albersOutput, 5070)
 
-                        ref_samples_name1 = output.replace(huc12, '070801050902')
-                        ref_samples = ref_samples_name1.replace(huc8, '07080105')
+                        ref_paths = df.loadVariablesDict(platform.node(), ACPFyear, '070801050902', '26915', 'mean18', named_cell_size, nowYmd, '')
+                        ref_samples = ref_paths['samples']
+                        # ref_samples_name1 = output.replace(huc12, '070801050902')
+                        # ref_samples = ref_samples_name1.replace(huc8, '07080105')
+                        # pl_ref_samples_name1 = pathlib.Path(ref_samples_name1)
+                        # ref_parts = list(pl_ref_samples_name1.parts)
+                        # if len(pl_ref_samples_name1.parts[1]) > 3: #longer than 'DEP'
+                        #     ref_parts[1] = 'DEP'
+                        #     pl_ref_samples_name1 = pathlib.Path(*ref_parts)
+                        # ref_samples_str = str(ref_samples)
+                        # should point to something like 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050902.gdb\\smpl3m_mean18070801050902'
                         ref_fields = df.getfields(ref_samples)
                         ref_fields = [r.replace('070801050902', huc12) for r in ref_fields]
-                        'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050902.gdb\\smpl3m_mean18070801050902'
 
                         for f in fields:
                             if f not in ref_fields:
