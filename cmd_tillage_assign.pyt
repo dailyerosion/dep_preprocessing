@@ -299,7 +299,7 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
     rc_year = int(tillage_table[-4:])#2023
     lu6_table_path = pathlib.Path(lu6_table)
     acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
-    field_len = rc_year - ref_year# + 1
+    field_len = rc_year - ref_year + 1
     log.debug(f'field_len is {field_len}')
 
     arcpy.AddField_management(fbndsTable, man_field, 'TEXT', field_length = field_len)
