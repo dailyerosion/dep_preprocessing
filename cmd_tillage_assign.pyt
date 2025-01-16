@@ -548,7 +548,7 @@ if __name__ == "__main__":
         man_field = field_dict['manField']
         # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_year)
         # year_tillage_table2 = year_tillage_table1.replace('_till', '_till' + option.capitalize())
-#new
+
         year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_year)
         # update till field to the year
         # till_field = till_field_base[:-4] + till_year
@@ -576,7 +576,7 @@ if __name__ == "__main__":
     field_dict = df.loadFieldNames(ACPFyears[-1])
     curr_man_field = field_dict['manField']
     fields_list.append(curr_man_field)
-#new
+
     if curr_man_field not in df.getfields(first_year):
         arcpy.AddField_management(first_year, curr_man_field, 'TEXT', field_length = field_len)
 
@@ -611,7 +611,8 @@ if __name__ == "__main__":
             dynam_codes = "".join(till_codes)
 
             # seed with the mean for non-observed years
-            all_codes = urow[first_man_index] + dynam_codes#"".join(till_codes)
+            # last value in first_man_index is same as first value in dynamic codes, so omit
+            all_codes = urow[first_man_index][:-1] + dynam_codes#"".join(till_codes)
             urow[dynam_man_index] = all_codes#dynam_codes
 
             # try to figure out the mean value for all the tillage codes in the timeframe
