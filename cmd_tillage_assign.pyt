@@ -426,7 +426,7 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
 
     log.debug(f'wrapping up at: {datetime.datetime.now()}')
 
-    return till_table_result
+    return till_table_result, field_len
 
 
 
@@ -526,7 +526,7 @@ if __name__ == "__main__":
         # rc_field = rc_field_base[6:-4] + ACPFyear
 ##        if ACPFyear == ACPFyears[0]:
 ##            log = None
-        tillage_table_return = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year)
+        tillage_table_return, field_len = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year)
         if ACPFyear == ACPFyears[0]:
             first_tillage_table = tillage_table_return
 ##            log = log_return
@@ -570,11 +570,12 @@ if __name__ == "__main__":
 ################################################################################
     # Add fields to store the dynamic tillage codes for each year as well as the overall mean tillage code
     
+    # field_len = int(till_year) - acpf_ref_year#2008
+    log.info(f'field_len for summary is {field_len}')
+
     field_dict = df.loadFieldNames(ACPFyears[-1])
     curr_man_field = field_dict['manField']
     fields_list.append(curr_man_field)
-    field_len = int(till_year) - acpf_ref_year#2008
-    log.debug(f'field_len for summary is {field_len}')
 #new
     if curr_man_field not in df.getfields(first_year):
         arcpy.AddField_management(first_year, curr_man_field, 'TEXT', field_length = field_len)
