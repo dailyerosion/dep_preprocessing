@@ -515,7 +515,7 @@ if __name__ == "__main__":
         elif 'rc_mn' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('rc_mn', 'rc_gee')
-        year_tillage_table = base_tillage_table.replace(base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')
+        year_tillage_table = base_tillage_table.replace(base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_'))
         # hack to older naming convention
         # year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
         log.debug(f'year_tillage_table is: {year_tillage_table}')
@@ -530,7 +530,7 @@ if __name__ == "__main__":
 ##        if ACPFyear == ACPFyears[0]:
 ##            log = None
         tillage_table_return, field_len = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year)
-        if ACPFyear == ACPFyears[0]:
+        if till_year == ACPFyears[0]:
             first_tillage_table = tillage_table_return
 ##            log = log_return
     arcpy.AddMessage("Back from doTillageAssign!")
