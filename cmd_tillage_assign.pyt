@@ -500,22 +500,25 @@ if __name__ == "__main__":
     # run through all the years to create annual tillage table, calculate the tillage codes for each field for that year
     acpf_ref_year = 2010 #date DEP CDL land cover stuff starts
     ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
-    for ACPFyear in ACPFyears:
-        log.info(f"Creating tillage data by field for ACPFyear: {ACPFyear}")
-        field_dict = df.loadFieldNames(ACPFyear)
+    for till_year in ACPFyears:
+        log.info(f"Creating tillage data by field for till_year: {till_year}")
+        field_dict = df.loadFieldNames(till_year)
         man_field = field_dict['manField']
         till_field = field_dict['tillField']
         rc_field = field_dict['resCoverField']
-        # man_field = man_field_base[:-4] + ACPFyear
-        # till_field = till_field_base[:-4] + ACPFyear
-        rc_table = rc_table_base[:-4] + ACPFyear
+        # man_field = man_field_base[:-4] + till_year
+        # till_field = till_field_base[:-4] + till_year
+        rc_table = rc_table_base[:-4] + till_year
         if 'mn_rc' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('mn_rc', 'gee_rc')
         elif 'rc_mn' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('rc_mn', 'rc_gee')
-        year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
+        year_tillage_table = base_tillage_table.replace(base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')
+        # hack to older naming convention
+        # year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
+        log.debug(f'year_tillage_table is: {year_tillage_table}')
         options = ['uniform', 'linear', 'none']
         # for option in options:
         #     rc_field = rc_field_base[:7] + option.capitalize() + rc_field_base[6:-4] + ACPFyear
@@ -541,25 +544,26 @@ if __name__ == "__main__":
     # options = [""]#['uniform']#, 'linear', 'none']
     # for option in options:
     fields_list = ['FBndID']
-    for till_year in ACPFyears:
-        log.info(f"Creating six year summary of tillage data for: {till_year}")
-        field_dict = df.loadFieldNames(till_year)
+    for till_smry_year in ACPFyears:
+        log.info(f"Creating six year summary of tillage data for: {till_smry_year}")
+        field_dict = df.loadFieldNames(till_smry_year)
         till_field = field_dict['tillField']
         man_field = field_dict['manField']
-        # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_year)
+        # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_smry_year)
         # year_tillage_table2 = year_tillage_table1.replace('_till', '_till' + option.capitalize())
 
-        # year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_year)
-        year_tillage_table2 = base_tillage_table.replace('_'+ ACPFyears[-1], '_'+ till_year)
+        # hack to older naming convention
+        # year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_smry_year)
+        year_tillage_table2 = base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_smry_year + '_')
         log.info(f'summarizing data in {year_tillage_table2}')
         # update till field to the year
-        # till_field = till_field_base[:-4] + till_year
-        if till_year == ACPFyears[0]:
+        # till_field = till_field_base[:-4] + till_smry_year
+        if till_smry_year == ACPFyears[0]:
             # copy the starting tillage table and add last year to name                
             first_year = arcpy.CopyRows_management(first_tillage_table, str(first_tillage_table) + '_' + ACPFyears[-1])
             log.info(f'copied initial data into str({first_year})')
             # first_year = arcpy.CopyRows_management(year_tillage_table2, year_tillage_table2 + '_' + ACPFyears[-1])
-            first_man_field = man_field#man_field_base[:-4] + till_year
+            first_man_field = man_field#man_field_base[:-4] + till_smry_year
             fields_list.append(first_man_field)
             first_till_field = till_field
 
@@ -573,7 +577,7 @@ if __name__ == "__main__":
 ################################################################################
     # Add fields to store the dynamic tillage codes for each year as well as the overall mean tillage code
     
-    # field_len = int(till_year) - acpf_ref_year#2008
+    # field_len = int(till_smry_year) - acpf_ref_year#2008
     log.info(f'field_len for summary is {field_len}')
 
     field_dict = df.loadFieldNames(ACPFyears[-1])
