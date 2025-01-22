@@ -549,12 +549,15 @@ if __name__ == "__main__":
         # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_year)
         # year_tillage_table2 = year_tillage_table1.replace('_till', '_till' + option.capitalize())
 
-        year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_year)
+        # year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_year)
+        year_tillage_table2 = base_tillage_table.replace('_'+ ACPFyears[-1], '_'+ till_year)
+        log.info(f'summarizing data in {year_tillage_table2}')
         # update till field to the year
         # till_field = till_field_base[:-4] + till_year
         if till_year == ACPFyears[0]:
             # copy the starting tillage table and add last year to name                
             first_year = arcpy.CopyRows_management(first_tillage_table, str(first_tillage_table) + '_' + ACPFyears[-1])
+            log.info(f'copied initial data into str({first_year})')
             # first_year = arcpy.CopyRows_management(year_tillage_table2, year_tillage_table2 + '_' + ACPFyears[-1])
             first_man_field = man_field#man_field_base[:-4] + till_year
             fields_list.append(first_man_field)
