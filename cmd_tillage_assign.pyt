@@ -296,9 +296,13 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
 
     df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field])
 
-    rc_year = int(tillage_table[-4:])#2023
-    lu6_table_path = pathlib.Path(lu6_table)
-    acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
+    if os.path.basename(tillage_table).startswith('till'):
+        rc_year = int(os.path.basename(tillage_table).split('_')[1])#[-4:])#2023
+    else:# year is last 4
+        rc_year = int(tillage_table[-4:])#2023
+    log.debug(f'rc_year is {rc_year}')
+    # lu6_table_path = pathlib.Path(lu6_table)
+    # acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
     field_len = rc_year - ref_year + 1
     log.debug(f'field_len is {field_len}')
 
@@ -438,14 +442,14 @@ if __name__ == "__main__":
         cleanup = False
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
-	"C:/DEP/Scripts/basics/cmd_tillage_assign - Copy.pyt",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050903.gdb/FB070801050903",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050903.gdb/LU6_070801050903",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050903.gdb/huc070801050903_gee_rc2022",
-	"E:/DEP_Proc/DEMProc/Manage_dem2013_3m_070801050903",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/07080105/idepACPF070801050903.gdb/huc070801050903_till_NewThresholds2022",
-	"2017",
-	"2022"]
+	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/FB070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/LU6_070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/RC_GEE_2023_huc_070801050902",
+	"E:/DEP_Proc/DEMProc/Manage_dem2013_2m_070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/till_2023_huc_070801050902",
+	"2014",
+	"2023"]
 ##        ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
 ##	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
 ##	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/FB090300090306",
@@ -515,9 +519,13 @@ if __name__ == "__main__":
         elif 'rc_mn' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('rc_mn', 'rc_gee')
-        year_tillage_table = base_tillage_table.replace(base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_'))
-        # hack to older naming convention
-        # year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
+
+        if os.path.basename(base_tillage_table).startswith('till'):
+            year_tillage_table = base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')
+        else:# year is last 4
+            # hack to older naming convention
+            year_tillage_table = base_tillage_table[:-4] + till_year#.replace('_till', '_till' + option.capitalize())
+
         log.debug(f'year_tillage_table is: {year_tillage_table}')
         options = ['uniform', 'linear', 'none']
         # for option in options:
@@ -529,6 +537,7 @@ if __name__ == "__main__":
         # rc_field = rc_field_base[6:-4] + ACPFyear
 ##        if ACPFyear == ACPFyears[0]:
 ##            log = None
+        log.debug(f'tillage inputs: {fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year}')
         tillage_table_return, field_len = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year)
         if till_year == ACPFyears[0]:
             first_tillage_table = tillage_table_return
@@ -559,8 +568,14 @@ if __name__ == "__main__":
         # update till field to the year
         # till_field = till_field_base[:-4] + till_smry_year
         if till_smry_year == ACPFyears[0]:
-            # copy the starting tillage table and add last year to name                
-            first_year = arcpy.CopyRows_management(first_tillage_table, str(first_tillage_table) + '_' + ACPFyears[-1])
+            # copy the starting tillage table and add last year to name
+            if os.path.basename(base_tillage_table).startswith('till'):
+                multi_year_tillage_table = str(first_tillage_table).replace('_'+ till_smry_year + '_', '_'+ till_smry_year + '_' + ACPFyears[-1] + '_')
+            else:# year is last 4
+                # hack to older naming convention
+                multi_year_tillage_table = str(first_tillage_table) + '_' + ACPFyears[-1]#base_tillage_table[:-4] + till_year#.replace('_till', '_till' + option.capitalize())
+
+            first_year = arcpy.CopyRows_management(first_tillage_table, multi_year_tillage_table)
             log.info(f'copied initial data into str({first_year})')
             # first_year = arcpy.CopyRows_management(year_tillage_table2, year_tillage_table2 + '_' + ACPFyears[-1])
             first_man_field = man_field#man_field_base[:-4] + till_smry_year
