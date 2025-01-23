@@ -493,6 +493,7 @@ if __name__ == "__main__":
     # ACPF directory where channel and catchment features reside
     log.debug(f'starting up at: {datetime.datetime.now()}')
     messages.addMessage("Tool: Executing with parameters '")
+    log.debug(f'initial parameters: {sys.argv[1:]}')
 
     ## bulk processing (Scratch) directory
     # if arcpy.Exists(bulkDir):
@@ -512,7 +513,7 @@ if __name__ == "__main__":
         rc_field = field_dict['resCoverField']
         # man_field = man_field_base[:-4] + till_year
         # till_field = till_field_base[:-4] + till_year
-        rc_table = rc_table_base[:-4] + till_year
+        rc_table = rc_table_base.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')#[:-4] + till_year
         if 'mn_rc' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('mn_rc', 'gee_rc')
@@ -547,14 +548,12 @@ if __name__ == "__main__":
 ################################################################################
     # Create a six year tillage summary table - using median and dynamic values
     # Do this by running through the tillage years again to calculate the dynamic tillage year by year
-    # The six year table uses the starting and end dates in the name
-    ACPFyear = str(int(start))
-##    ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
+    # The created summary/six year table uses the starting and end dates in the name
     # options = [""]#['uniform']#, 'linear', 'none']
     # for option in options:
     fields_list = ['FBndID']
     for till_smry_year in ACPFyears:
-        log.info(f"Creating six year summary of tillage data for: {till_smry_year}")
+        log.info(f"Creating overall summary of tillage data for: {till_smry_year}")
         field_dict = df.loadFieldNames(till_smry_year)
         till_field = field_dict['tillField']
         man_field = field_dict['manField']
@@ -577,7 +576,6 @@ if __name__ == "__main__":
 
             first_year = arcpy.CopyRows_management(first_tillage_table, multi_year_tillage_table)
             log.info(f'copied initial data into str({first_year})')
-            # first_year = arcpy.CopyRows_management(year_tillage_table2, year_tillage_table2 + '_' + ACPFyears[-1])
             first_man_field = man_field#man_field_base[:-4] + till_smry_year
             fields_list.append(first_man_field)
             first_till_field = till_field
