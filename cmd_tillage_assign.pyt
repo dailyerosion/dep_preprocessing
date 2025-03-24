@@ -14,6 +14,8 @@ import pathlib
 import datetime
 import time
 import math
+import time
+import math
 from os.path import join as opj
 import numpy as np
 
@@ -23,7 +25,14 @@ login = os.getlogin()
 #     boxes = ['C:\\Users\\bkgelder\\Box\\Data_Sharing\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
 # else:
 #     boxes = ['C:\\Users\\idep2\\Box\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
+# if login == 'bkgelder':
+#     boxes = ['C:\\Users\\bkgelder\\Box\\Data_Sharing\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
+# else:
+#     boxes = ['C:\\Users\\idep2\\Box\\Scripts\\basics', 'M:\\DEP\\Scripts\\basics']
 
+# for box in boxes:
+#     if os.path.isdir(box):
+#         sys.path.append(box)
 # for box in boxes:
 #     if os.path.isdir(box):
 #         sys.path.append(box)
@@ -224,10 +233,10 @@ def flip_flop():
         ff = False
     return ff
         
-def doTillageSummary(fb, lu6_table, rc_table, bulkDir, option, tillage_table, cleanup, messages, log):
+def doTillageSummary(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages, log):
     pass
 
-def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages, log):
+def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, tillage_table, cleanup, messages, log, ref_year):
     ## man_data_processor
     ## takes residue cover or management data and spicifies crop management files for Daily Erosion Project
     ## 2020/02/11 v2 - added ability to fill in missing managements if not in Minnesota or Iowa BKG
@@ -296,16 +305,19 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
 
     df.joinDict(fbndsTable, 'FBndID', rc_table, 'FBndID', ['MEDIAN'], [rc_field])
 
-    ref_year = 2010 #date DEP CDL land cover stuff starts
-    rc_year = int(tillage_table[-4:])#2023
-    lu6_table_path = pathlib.Path(lu6_table)
-    acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
+    if os.path.basename(tillage_table).startswith('till'):
+        rc_year = int(os.path.basename(tillage_table).split('_')[1])#[-4:])#2023
+    else:# year is last 4
+        rc_year = int(tillage_table[-4:])#2023
+    log.debug(f'rc_year is {rc_year}')
+    # lu6_table_path = pathlib.Path(lu6_table)
+    # acpf_year = lu6_table_path.parent.parent.parent.name[-4:]
     field_len = rc_year - ref_year + 1
     log.debug(f'field_len is {field_len}')
 
     arcpy.AddField_management(fbndsTable, man_field, 'TEXT', field_length = field_len)
     arcpy.AddField_management(fbndsTable, till_field, 'TEXT', field_length = field_len)
-    arcpy.AddField_management(fbndsTable, rc_field, 'FLOAT')
+##    arcpy.AddField_management(fbndsTable, rc_field, 'FLOAT')
     # arcpy.AddField_management(fbndsTable, adj_rc_field, 'FLOAT')
 
     rc_fields = ['GenLU', man_field, 'CropRotatn', rc_field, 'FBndID', till_field]#, adj_rc_field]
@@ -353,6 +365,7 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
         log.info('default management from default')
         defaultManagement = '3'
     log.info('default management is: ' + defaultManagement)
+    log.info(f'rc_fields is: {rc_fields}')
 
 
     # Now calculate management for all fields using defaults if no res cover (or out of bound crop)
@@ -382,7 +395,7 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
                 else:
                     adj_rescover = None
 
-                # urow[6] = adj_rescover#srow[3]
+##                urow[6] = adj_rescover#srow[3]
 
                 if mancrop in keys:
                     if adj_rescover is not None:
@@ -426,7 +439,7 @@ def tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulk
 
     log.debug(f'wrapping up at: {datetime.datetime.now()}')
 
-    return till_table_result
+    return till_table_result, field_len
 
 
 
@@ -439,16 +452,25 @@ if __name__ == "__main__":
 
         parameters = ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
 	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/FB090300090306",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/LU6_090300090306",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_mn_rc2022",
-	# "Management_CY_2022",
-	# "Till_code_CY_2022",
-	# "Adj_RC_CY_2022",
-	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_090300090306",
-	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_till2022",
-	"2017",
-	"2022"]
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/FB070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/LU6_070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/RC_GEE_2023_huc_070801050902",
+	"E:/DEP_Proc/DEMProc/Manage_dem2013_2m_070801050902",
+	"D:/DEP/Man_Data_ACPF/dep_ACPF2023/07080105/idepACPF070801050902.gdb/till_2023_huc_070801050902",
+	"2014",
+	"2023"]
+##        ["C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/pythonw.exe",
+##	"C:/DEP/Scripts/basics/cmd_tillage_assign.pyt",
+##	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/FB090300090306",
+##	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/LU6_090300090306",
+##	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_mn_rc2022",
+##	# "Management_CY_2022",
+##	# "Till_code_CY_2022",
+##	# "Adj_RC_CY_2022",
+##	"D:/DEP_Proc/DEMProc/Manage_dem2013_3m_090300090306",
+##	"D:/DEP/Man_Data_ACPF/dep_ACPF2022/09030009/idepACPF090300090306.gdb/huc090300090306_till2022",
+##	"2017",
+##	"2022"]
 
         for i in parameters[2:]:
             sys.argv.append(i)
@@ -459,11 +481,13 @@ if __name__ == "__main__":
 
     fb, lu6_table, rc_table_base, bulkDir, base_tillage_table, start, end = [i for i in sys.argv[1:]]
     messages = msgStub()
+    # set log as None for first run
+##    log = None
 
 # old code - options were for different ways of apportioning tillage codes based on residue cover - adding 10% everywhere, linear adjustment (0-10% based on initial, or none)
 #    doTillageSummary(fb, lu6_table, rc_table_base, bulkDir, option, base_tillage_table, cleanup, messages, log)
-    doTillageSummary(fb, lu6_table, rc_table_base, bulkDir, base_tillage_table, cleanup, messages)#, log)
-    arcpy.AddMessage("Back from doTillageAssign!")
+##    doTillageSummary(fb, lu6_table, rc_table_base, bulkDir, base_tillage_table, cleanup, messages, log)
+    arcpy.AddMessage("Back from doTillageSummary!")
 
 
     huc12 = fb[-12:]
@@ -478,6 +502,7 @@ if __name__ == "__main__":
     # ACPF directory where channel and catchment features reside
     log.debug(f'starting up at: {datetime.datetime.now()}')
     messages.addMessage("Tool: Executing with parameters '")
+    log.debug(f'initial parameters: {sys.argv[1:]}')
 
     ## bulk processing (Scratch) directory
     # if arcpy.Exists(bulkDir):
@@ -487,23 +512,31 @@ if __name__ == "__main__":
 
 ################################################################################
     # run through all the years to create annual tillage table, calculate the tillage codes for each field for that year
+    acpf_ref_year = 2010 #date DEP CDL land cover stuff starts
     ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
-    for ACPFyear in ACPFyears:
-        log.info(f"Creating tillage data by field for ACPFyear: {ACPFyear}")
-        field_dict = df.loadFieldNames(ACPFyear)
+    for till_year in ACPFyears:
+        log.info(f"Creating tillage data by field for till_year: {till_year}")
+        field_dict = df.loadFieldNames(till_year)
         man_field = field_dict['manField']
         till_field = field_dict['tillField']
         rc_field = field_dict['resCoverField']
-        # man_field = man_field_base[:-4] + ACPFyear
-        # till_field = till_field_base[:-4] + ACPFyear
-        rc_table = rc_table_base[:-4] + ACPFyear
+        # man_field = man_field_base[:-4] + till_year
+        # till_field = till_field_base[:-4] + till_year
+        rc_table = rc_table_base.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')#[:-4] + till_year
         if 'mn_rc' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('mn_rc', 'gee_rc')
         elif 'rc_mn' in rc_table:
             if not arcpy.Exists(rc_table):
                 rc_table = rc_table.replace('rc_mn', 'rc_gee')
-        year_tillage_table = base_tillage_table[:-4] + ACPFyear#.replace('_till', '_till' + option.capitalize())
+
+        if os.path.basename(base_tillage_table).startswith('till'):
+            year_tillage_table = base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_year + '_')
+        else:# year is last 4
+            # hack to older naming convention
+            year_tillage_table = base_tillage_table[:-4] + till_year#.replace('_till', '_till' + option.capitalize())
+
+        log.debug(f'year_tillage_table is: {year_tillage_table}')
         options = ['uniform', 'linear', 'none']
         # for option in options:
         #     rc_field = rc_field_base[:7] + option.capitalize() + rc_field_base[6:-4] + ACPFyear
@@ -514,8 +547,9 @@ if __name__ == "__main__":
         # rc_field = rc_field_base[6:-4] + ACPFyear
 ##        if ACPFyear == ACPFyears[0]:
 ##            log = None
-        tillage_table_return = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log)
-        if ACPFyear == ACPFyears[0]:
+        log.debug(f'tillage inputs: {fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year}')
+        tillage_table_return, field_len = tillageAssign(fb, lu6_table, rc_table, man_field, till_field, rc_field, bulkDir, option, year_tillage_table, cleanup, messages, log, acpf_ref_year)
+        if till_year == ACPFyears[0]:
             first_tillage_table = tillage_table_return
 ##            log = log_return
     arcpy.AddMessage("Back from doTillageAssign!")
@@ -523,29 +557,35 @@ if __name__ == "__main__":
 ################################################################################
     # Create a six year tillage summary table - using median and dynamic values
     # Do this by running through the tillage years again to calculate the dynamic tillage year by year
-    # The six year table uses the starting and end dates in the name
-    ACPFyear = str(int(start))
-##    ACPFyears = [str(a) for a in range(int(start), int(end) + 1)]
+    # The created summary/six year table uses the starting and end dates in the name
     # options = [""]#['uniform']#, 'linear', 'none']
     # for option in options:
     fields_list = ['FBndID']
-    for till_year in ACPFyears:
-        log.info(f"Creating six year summary of tillage data for: {till_year}")
-        log.info(f"ACPFyear: {ACPFyear}")
-        field_dict = df.loadFieldNames(ACPFyear)
+    for till_smry_year in ACPFyears:
+        log.info(f"Creating overall summary of tillage data for: {till_smry_year}")
+        field_dict = df.loadFieldNames(till_smry_year)
         till_field = field_dict['tillField']
         man_field = field_dict['manField']
-        # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_year)
+        # year_tillage_table1 = base_tillage_table.replace(ACPFyear, till_smry_year)
         # year_tillage_table2 = year_tillage_table1.replace('_till', '_till' + option.capitalize())
-#new
-        year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_year)
+
+        # hack to older naming convention
+        # year_tillage_table2 = base_tillage_table.replace('Thresholds' + ACPFyears[-1], 'Thresholds' + till_smry_year)
+        year_tillage_table2 = base_tillage_table.replace('_' + ACPFyears[-1] + '_', '_'+ till_smry_year + '_')
+        log.info(f'summarizing data in {year_tillage_table2}')
         # update till field to the year
-        # till_field = till_field_base[:-4] + till_year
-        if till_year == ACPFyears[0]:
-            # copy the starting tillage table and add last year to name                
-            first_year = arcpy.CopyRows_management(first_tillage_table, first_tillage_table + '_' + ACPFyears[-1])
-            # first_year = arcpy.CopyRows_management(year_tillage_table2, year_tillage_table2 + '_' + ACPFyears[-1])
-            first_man_field = man_field#man_field_base[:-4] + till_year
+        # till_field = till_field_base[:-4] + till_smry_year
+        if till_smry_year == ACPFyears[0]:
+            # copy the starting tillage table and add last year to name
+            if os.path.basename(base_tillage_table).startswith('till'):
+                multi_year_tillage_table = str(first_tillage_table).replace('_'+ till_smry_year + '_', '_'+ till_smry_year + '_' + ACPFyears[-1] + '_')
+            else:# year is last 4
+                # hack to older naming convention
+                multi_year_tillage_table = str(first_tillage_table) + '_' + ACPFyears[-1]#base_tillage_table[:-4] + till_year#.replace('_till', '_till' + option.capitalize())
+
+            first_year = arcpy.CopyRows_management(first_tillage_table, multi_year_tillage_table)
+            log.info(f'copied initial data into str({first_year})')
+            first_man_field = man_field#man_field_base[:-4] + till_smry_year
             fields_list.append(first_man_field)
             first_till_field = till_field
 
@@ -559,11 +599,13 @@ if __name__ == "__main__":
 ################################################################################
     # Add fields to store the dynamic tillage codes for each year as well as the overall mean tillage code
     
+    # field_len = int(till_smry_year) - acpf_ref_year#2008
+    log.info(f'field_len for summary is {field_len}')
+
     field_dict = df.loadFieldNames(ACPFyears[-1])
     curr_man_field = field_dict['manField']
     fields_list.append(curr_man_field)
-    field_len = int(till_year) - 2008
-#new
+
     if curr_man_field not in df.getfields(first_year):
         arcpy.AddField_management(first_year, curr_man_field, 'TEXT', field_length = field_len)
 
@@ -598,7 +640,8 @@ if __name__ == "__main__":
             dynam_codes = "".join(till_codes)
 
             # seed with the mean for non-observed years
-            all_codes = urow[first_man_index] + dynam_codes#"".join(till_codes)
+            # last value in first_man_index is same as first value in dynamic codes, so omit
+            all_codes = urow[first_man_index][:-1] + dynam_codes#"".join(till_codes)
             urow[dynam_man_index] = all_codes#dynam_codes
 
             # try to figure out the mean value for all the tillage codes in the timeframe

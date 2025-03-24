@@ -398,6 +398,8 @@ if __name__ == "__main__":
                     if canopy_cover_map is not None:
                         sample_list.append(str(canopy_cover_reproject))
                     log.info('sampling first time')
+                    log.debug(f'sample_list: {sample_list}')
+                    log.debug(f'fp: {str(fp)}')
                     sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
@@ -427,7 +429,9 @@ if __name__ == "__main__":
                         ssRepro = arcpy.CopyRaster_management(noGaps, ssReproName)
                         arcpy.JoinField_management(ssRepro, 'VALUE', ss, 'VALUE', joinFields)
                         arcpy.Delete_management(sampleRaw1)
-                        sampleRaw1 = Sample(sample_list, fp, os.path.join('in_memory', 'smpl_raw6_' + huc12), 'NEAREST')
+                        log.debug(f'sample_list: {sample_list}')
+                        log.debug(f'fp: {str(fp)}')
+                        sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw7_' + huc12), 'NEAREST')
 
                     srFp = arcpy.Describe(fp).spatialReference
                     xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
