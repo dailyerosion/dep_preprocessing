@@ -28,8 +28,8 @@ import os
 import traceback
 import platform
 from arcpy.sa import *
-sys.path.append("C:\\DEP\\Scripts\\basics")
-sys.path.append("C:\\GitHub\\hydro_dems")
+# sys.path.append("C:\\DEP\\Scripts\\basics")
+# sys.path.append("C:\\GitHub\\hydro_dems")
 import dem_functions as df
 from os.path import join as opj
 
@@ -199,7 +199,7 @@ class msgStub:
 #         added to the display."""
 #         return
 
-# def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, field_or_forest, 
+# def doSampler(pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, irrigation_map, field_and_forest, 
 #               lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, cleanup, messages):
 
 
@@ -238,13 +238,13 @@ if __name__ == "__main__":
 
     messages = msgStub()
 
-    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_or_forest,\
+    pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_and_forest,\
         lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map = [s if s != "" else None for s in sys.argv[1:]]
 
     # switch a text 'True' into a real Python True
     cleanup = True if cleanup == "True" else False
 
-    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_or_forest,\
+    arguments = [pElevFile, fpRasterInit, fplRasterInit, gordRaster, ss, statsgo2, irrigation_map, field_and_forest,\
         lu6, soilsDir, output, nullOutput, null_flowpaths, procDir, buffered_huc, canopy_cover_map, cleanup]
 
     for a in arguments:
@@ -314,9 +314,9 @@ if __name__ == "__main__":
 
         solFyFieldName = 'SOL_FY_' + solYear
         ACPFyear = str(int(solYear)-1)
-        fields = df.loadFieldNames(ACPFyear)
-        cropRotatnFieldName = fields['rotField']#'CropRotatn_CY_' + str(int(ACPFyear))
-        managementFieldName = fields['manField']#'Management_CY_' + str(int(ACPFyear))
+        fields_dict = df.loadFieldNames(ACPFyear)
+        cropRotatnFieldName = fields_dict['rotField']#'CropRotatn_CY_' + str(int(ACPFyear))
+        managementFieldName = fields_dict['manField']#'Management_CY_' + str(int(ACPFyear))
 
         log.info(f"cropRotatnFieldName is {cropRotatnFieldName}")
         log.info(f"managementFieldName is {managementFieldName}")
@@ -326,7 +326,7 @@ if __name__ == "__main__":
             arcpy.CalculateField_management(lu6, cropRotatnFieldName, '!CropRotatn!', 'PYTHON3')
 
     ## use ACPF directory as workspace since 2 of the 5 rasters or feature classes we need are here already
-        arcpy.env.workspace = os.path.dirname(field_or_forest)#fileGDB
+        arcpy.env.workspace = os.path.dirname(field_and_forest)#fileGDB
 
         ## convert field polygons to raster so we can use sample
         if arcpy.Exists(ss) and arcpy.Exists(gordRaster):
@@ -398,8 +398,6 @@ if __name__ == "__main__":
                     if canopy_cover_map is not None:
                         sample_list.append(str(canopy_cover_reproject))
                     log.info('sampling first time')
-                    log.debug(f'sample_list: {sample_list}')
-                    log.debug(f'fp: {str(fp)}')
                     sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
@@ -429,9 +427,7 @@ if __name__ == "__main__":
                         ssRepro = arcpy.CopyRaster_management(noGaps, ssReproName)
                         arcpy.JoinField_management(ssRepro, 'VALUE', ss, 'VALUE', joinFields)
                         arcpy.Delete_management(sampleRaw1)
-                        log.debug(f'sample_list: {sample_list}')
-                        log.debug(f'fp: {str(fp)}')
-                        sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw7_' + huc12), 'NEAREST')
+                        sampleRaw1 = Sample(sample_list, fp, os.path.join('in_memory', 'smpl_raw6_' + huc12), 'NEAREST')
 
                     srFp = arcpy.Describe(fp).spatialReference
                     xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
@@ -443,24 +439,29 @@ if __name__ == "__main__":
                     xy_int_bounds = opj(sgdb, 'int_pts_' + huc12)
                     statsgoFieldName = 'STATSGO2_MUKEY'#addFieldStatsgo.getInput(1)
                     log.info('sampling second time')
-                    sampleRaw = arcpy.Intersect_analysis([xyUTM, field_or_forest, statsgo2_clip], xy_int_bounds)
-                    if 'FB' in field_or_forest:
-                        # remove extra field brought in by intersection
-                        arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
-                        arcpy.DeleteField_management(sampleRaw, 'Acres')
-                        arcpy.DeleteField_management(sampleRaw, 'isAG')
-                        arcpy.DeleteField_management(sampleRaw, 'updateYr')
-                        arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
-                    else:#elif arcpy.Exists(forest_units):
-                        # arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
-                        arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
-                        # fields from forest units
-                        arcpy.DeleteField_management(sampleRaw, 'gridcode')
-                        arcpy.DeleteField_management(sampleRaw, 'Id')
+                    sampleRaw = arcpy.Intersect_analysis([xyUTM, field_and_forest, statsgo2_clip], xy_int_bounds)
+                # if 'FB' in field_and_forest:
+                    # remove extra field brought in by intersection
+                    arcpy.DeleteField_management(sampleRaw, 'FID_FB' + huc12)
+                    arcpy.DeleteField_management(sampleRaw, 'Acres')
+                    arcpy.DeleteField_management(sampleRaw, 'isAG')
+                    arcpy.DeleteField_management(sampleRaw, 'updateYr')
+                    arcpy.DeleteField_management(sampleRaw, 'FB_IN_HUC12')
+                # else:#elif arcpy.Exists(forest_units):
+                    # arcpy.AddField_management(sampleRaw, 'FB' + huc12, 'TEXT')
+                    # arcpy.AddField_management(sampleRaw, 'FBndID', 'TEXT')
+                    # fields from forest units
+                    arcpy.DeleteField_management(sampleRaw, 'FID_FU' + huc12)
+                    arcpy.DeleteField_management(sampleRaw, 'gridcode')
+                    arcpy.DeleteField_management(sampleRaw, 'Id')
 
                     arcpy.DeleteField_management(sampleRaw, 'FID_sample_pts_utm_' + huc12)
 
                     arcpy.AlterField_management(sampleRaw, 'MUKEY', statsgoFieldName)
+
+                    ## remove data about original UTM coordinates to avoid confusion
+                    arcpy.DeleteField_management(sampleRaw, 'X')
+                    arcpy.DeleteField_management(sampleRaw, 'Y')
 
                     statsgo2_stem = pathlib.Path(statsgo2).stem
                     statsgo_fields = df.getfields(statsgo2) + ['FID_' + statsgo2_stem] + ['FID_' + os.path.basename(str(statsgo2_clip))]
@@ -478,13 +479,9 @@ if __name__ == "__main__":
                     arcpy.AlterField_management(sampleRaw, elev_field_name, 'ep' + str(int(elev.meanCellHeight)) + 'm' + huc12)
                     arcpy.AlterField_management(sampleRaw, gord_field_name, 'gord_' + huc12)
                     arcpy.AlterField_management(sampleRaw, irrigated_field_name, 'irrigated')
-                    if canopy_cover_map is not None:
-                        cover_field_name = df.getfields(sampleRaw1, 'canopy_cover*')[0]
-                        arcpy.AlterField_management(sampleRaw, cover_field_name, 'canopy_cover')
-
-                    ## remove data about original UTM coordinates to avoid confusion
-                    arcpy.DeleteField_management(sampleRaw, 'X')
-                    arcpy.DeleteField_management(sampleRaw, 'Y')
+                    # if canopy_cover_map is not None:
+                    cover_field_name = df.getfields(sampleRaw1, 'canopy_cover*')[0]
+                    arcpy.AlterField_management(sampleRaw, cover_field_name, 'canopy_cover')
 
                     # make sure no 0 values remain (shouldn't after re-write, but...)
                     sample = arcpy.Select_analysis(sampleRaw, os.path.join(sgdb, 'smpl_gord_' + huc12), fpField + ' > 0 AND ep' + str(int(elev.meanCellHeight)) + 'm' + huc12 + ' > 0')
@@ -496,6 +493,8 @@ if __name__ == "__main__":
                     if arcpy.Exists(lu6):
                         lu6_fields = set([f for f in arcpy.ListFields(lu6) if f in fields_to_join])
                         df.joinDict(sample, 'FBndID', lu6, 'FBndID', list(lu6_fields))
+                        # join tillage table
+
                         remaining_fields_to_join = fields_to_join - lu6_fields 
                     log.debug(f"remaining_fields_to_join: {remaining_fields_to_join}")
                     for r in remaining_fields_to_join:
@@ -508,36 +507,39 @@ if __name__ == "__main__":
                     # addFieldSoilgrids = arcpy.AddField_management(sample, 'SOILGRIDS_Exists', 'SHORT')
                     # soilgridsFieldName = addFieldSoilgrids.getInput(1)
 
-                    if canopy_cover_map is not None:
-                        canopy_cover_field_name = df.getfields(sampleRaw, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
-                        # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
-                        with arcpy.da.UpdateCursor(sample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, managementFieldName, cropRotatnFieldName, canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
-                            for urow in ucur:
-                                # set all rows with canopy cover > 0 equal to forest
-                                if urow[-1] > 0:
-                                    urow[-2] = 'F' * 12
-                                # now set the management file to use
-                                if urow[-1] >= 90:
-                                    urow[-3] = 'J' * 12
-                                elif urow[-1] >= 80:
-                                    urow[-3] = 'I' * 12
-                                elif urow[-1] >= 70:
-                                    urow[-3] = 'H' * 12
-                                elif urow[-1] >= 60:
-                                    urow[-3] = 'G' * 12
-                                elif urow[-1] >= 50:
-                                    urow[-3] = 'F' * 12
-                                elif urow[-1] >= 40:
-                                    urow[-3] = 'E' * 12
-                                elif urow[-1] >= 30:
-                                    urow[-3] = 'D' * 12
-                                elif urow[-1] >= 20:
-                                    urow[-3] = 'C' * 12
-                                elif urow[-1] >= 10:
-                                    urow[-3] = 'B' * 12
-                                elif urow[-1] >= 0:
-                                    urow[-3] = 'A' * 12
-                                ucur.updateRow(urow)
+                # if canopy_cover_map is not None:
+                    canopy_cover_field_name = df.getfields(sampleRaw, os.path.basename(str(canopy_cover_reproject)) + '*')[0]
+                    # give a value of crop rotation string of all F to those that have canopy cover from LANDFIRE
+                    with arcpy.da.UpdateCursor(sample, ['GenLU', managementFieldName, ssurgo_field_name, 'SOL_Exists', fpField, 'fpLen' + huc12, managementFieldName, cropRotatnFieldName, canopy_cover_field_name], sql_clause = (None, 'ORDER BY ' + fpField + ', fpLen' + huc12)) as ucur:
+                        for urow in ucur:
+                            # set all rows GenLU equal to Forest and all CropRotatn to 'F'
+                            urow[0] = 'Forest'
+                            urow[-2] = 'F' * 12
+                            # set all rows with canopy cover > 0 equal to a forest management file
+                            if urow[-1] > 0:
+                                urow[-2] = 'F' * 12
+                            # now set the management file to use
+                            if urow[-1] >= 90:
+                                urow[-3] = 'J' * 12
+                            elif urow[-1] >= 80:
+                                urow[-3] = 'I' * 12
+                            elif urow[-1] >= 70:
+                                urow[-3] = 'H' * 12
+                            elif urow[-1] >= 60:
+                                urow[-3] = 'G' * 12
+                            elif urow[-1] >= 50:
+                                urow[-3] = 'F' * 12
+                            elif urow[-1] >= 40:
+                                urow[-3] = 'E' * 12
+                            elif urow[-1] >= 30:
+                                urow[-3] = 'D' * 12
+                            elif urow[-1] >= 20:
+                                urow[-3] = 'C' * 12
+                            elif urow[-1] >= 10:
+                                urow[-3] = 'B' * 12
+                            elif urow[-1] >= 0:
+                                urow[-3] = 'A' * 12
+                            ucur.updateRow(urow)
 
                     # create a feature class from sample that preserves Nulls
                     gdbsample = arcpy.Select_analysis(sample, os.path.join(sgdb, 'init_sample'), cropRotatnFieldName + ' IS NOT NULL')
@@ -652,26 +654,19 @@ if __name__ == "__main__":
                         albersOutput = os.path.join(sgdb, 'sample_pts_5070_' + huc12)
                         xyAlbers = arcpy.Project_management(gdbsample, albersOutput, 5070)
 
-                        ref_paths = df.loadVariablesDict(platform.node(), ACPFyear, '070801050902', '26915', 'mean18', int(named_cell_size), nowYmd, '')
-                        ref_samples = ref_paths['samples']
-                        # ref_samples_name1 = output.replace(huc12, '070801050902')
-                        # ref_samples = ref_samples_name1.replace(huc8, '07080105')
-                        # pl_ref_samples_name1 = pathlib.Path(ref_samples_name1)
-                        # ref_parts = list(pl_ref_samples_name1.parts)
-                        # if len(pl_ref_samples_name1.parts[1]) > 3: #longer than 'DEP'
-                        #     ref_parts[1] = 'DEP'
-                        #     pl_ref_samples_name1 = pathlib.Path(*ref_parts)
-                        # ref_samples_str = str(ref_samples)
-                        # should point to something like 'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050902.gdb\\smpl3m_mean18070801050902'
+                        smpl_fields = df.getfields(xyAlbers)
+                        ref_samples_name1 = output.replace(huc12, '070801050902')
+                        ref_samples = ref_samples_name1.replace(huc8, '07080105')
                         ref_fields = df.getfields(ref_samples)
                         ref_fields = [r.replace('070801050902', huc12) for r in ref_fields]
+                        'D:\\DEP\\Man_Data_ACPF\\dep_ACPF2022\\07080105\\idepACPF070801050902.gdb\\smpl3m_mean18070801050902'
 
-                        for f in fields:
+                        for f in smpl_fields:
                             if f not in ref_fields:
-                                log.warning(f'missing field: {f}')
+                                log.warning(f'reference is missing field: {f}')
                         for f in ref_fields:
-                            if f not in fields:
-                                log.warning(f'extra field: {f}')
+                            if f not in smpl_fields:
+                                log.warning(f'sample has extra field: {f}')
 
                         goodsamples = arcpy.Select_analysis(xyAlbers, output, where_clause = goodSQL)
     ##                    print('rows in output is ' + str(arcpy.GetCount_management(goodsamples)))#output)))
@@ -718,16 +713,7 @@ if __name__ == "__main__":
                     else:
                         pass
 
-    except AssertionError as e:
-##        log.debug(e.message)
-        if sys.version_info.major == 2:
-            arcpy.AddError(e.message)
-            print(e.message)
-            log.warning(e.message)
-        elif sys.version_info.major == 3:
-            arcpy.AddError(e)
-            print(e)
-            log.warning(e)
+    except AssertionError:
         log.warning('assertion failure on: ' + huc12)
         sys.exit(1)
 
