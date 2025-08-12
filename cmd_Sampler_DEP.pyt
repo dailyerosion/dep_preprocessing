@@ -20,6 +20,7 @@
 ## 2022.04.20 - added logging, switched prints to log.
 ## 2022.06.09 - added irrgation map sampling to determine whether a flowpath is irrigated
 ## 2024.03.27 - moved code to AG Pro 3.2, Python 3.9
+## 2025.03.25 - figured out intermittent sampling failure could be fixed with new sample option - 'generate feature class'
 
 # Import system modules
 import arcpy
@@ -387,6 +388,8 @@ if __name__ == "__main__":
                 if arcpy.Exists(fpRaster):
                 ## Set up absolute paths elevation, flowpath (number), and flowpath length rasters
                     fp = Raster(fpRaster)
+                    srFp = arcpy.Describe(fp).spatialReference
+                    arcpy.env.outputCoordinateSystem = srFp
                     
                     fpLenCm = Raster(fplRaster)
 
@@ -398,7 +401,7 @@ if __name__ == "__main__":
                     if canopy_cover_map is not None:
                         sample_list.append(str(canopy_cover_reproject))
                     log.info('sampling first time')
-                    sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST')
+                    sampleRaw1 = Sample(sample_list, fp, os.path.join(sgdb, 'smpl_raw6_' + huc12), 'NEAREST', generate_feature_class="FEATURE_CLASS")
 
                     # now test for Null soil values (due to single cell dropouts in ACPF gSSURGO creation...)
                     ssurgo_field_name = df.getfields(sampleRaw1, 'ssurgo*')[0]
@@ -427,14 +430,13 @@ if __name__ == "__main__":
                         ssRepro = arcpy.CopyRaster_management(noGaps, ssReproName)
                         arcpy.JoinField_management(ssRepro, 'VALUE', ss, 'VALUE', joinFields)
                         arcpy.Delete_management(sampleRaw1)
-                        sampleRaw1 = Sample(sample_list, fp, os.path.join('in_memory', 'smpl_raw6_' + huc12), 'NEAREST')
+                        sampleRaw1 = Sample(sample_list, fp, os.path.join('in_memory', 'smpl_raw6_' + huc12), 'NEAREST', generate_feature_class="FEATURE_CLASS")
 
-                    srFp = arcpy.Describe(fp).spatialReference
-                    xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
+                    # xyLyr = arcpy.MakeXYEventLayer_management(sampleRaw1, 'X', 'Y', 'xy_layer', srFp)
 
                     sample_output_name = 'sample_pts_utm_' + huc12
                     xyOutput = os.path.join(inm, sample_output_name)
-                    xyUTM = arcpy.CopyFeatures_management(xyLyr, xyOutput)
+                    xyUTM = arcpy.CopyFeatures_management(sampleRaw1, xyOutput)#xyLyr, xyOutput)
                     # send to gdb for later ordered update cursor
                     xy_int_bounds = opj(sgdb, 'int_pts_' + huc12)
                     statsgoFieldName = 'STATSGO2_MUKEY'#addFieldStatsgo.getInput(1)
